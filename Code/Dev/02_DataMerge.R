@@ -13,9 +13,14 @@ library(purrr)
 library(data.table)
 library(glue)
 library(feather)
+library(rprojroot)
+
+# Define a function that computes file paths relative to where root .git folder is located
+F <- is_git_root$make_fix_file() 
+# Example usage: F("Data/Raw") , F("Data/Processed")
 
 # Load feather data
-wrk.02_DataMerge_00 <- setDT(read_feather(glue("D:/Data Science/Athletics Data/Project Files/athletics_data_analysis/Data/Processed/wrk.01DataPrep_4.feather")))
+wrk.02_DataMerge_00 <- setDT(read_feather(glue(F("Data/Processed/wrk.01DataPrep_4.feather"))))
 
 #Cleanup for ref table merge:
 wrk.02_DataMerge_00 <- wrk.02_DataMerge_00 %>%
@@ -26,7 +31,7 @@ wrk.02_DataMerge_00 <- wrk.02_DataMerge_00 %>%
   mutate(CATCompetitionVenue = as.factor(CATCompetitionVenue)) #return to factor format
 
 #Load the reference workbook containing the reference tables
-REF.Workbook_01 <- loadWorkbook("D:/Data Science/Athletics Data/Project Files/athletics_data_analysis/Data/Reference/REF_AthleticClubs_Venues_PerfAdjust.xlsx") 
+REF.Workbook_01 <- loadWorkbook(F("Data/Reference/REF_AthleticClubs_Venues_PerfAdjust.xlsx"))
                            
 REF.AthleticClubLookup <- readWorksheet(REF.Workbook_01, sheet = "Clubs") %>%
   mutate(CATAthleticClubCode = as.factor(CATAthleticClubCode)) %>%
@@ -107,7 +112,7 @@ wrk.02_DataMerge_01 <- wrk.02_DataMerge_REFAdjust_2 %>%
   ungroup() #if you use group_by, also use ungroup() to save heartache later. Return to LONG form.
   
 # Save Feather file to store progress:
-write_feather(wrk.02_DataMerge_01, "D:/Data Science/Athletics Data/Project Files/athletics_data_analysis/Data/Processed/wrk.02_DataMerge_01.feather")
+write_feather(wrk.02_DataMerge_01, F("Data/Processed/wrk.02_DataMerge_01.feather"))
 
 # ======================================================================================================================== #
 # END OF PROGRAM #

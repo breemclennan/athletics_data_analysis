@@ -21,10 +21,15 @@ library(glue)
 library(DescTools)
 library(RDCOMClient)
 library(stringr)
+library(rprojroot)
 `%ni%` <- Negate(`%in%`)
 
+# Define a function that computes file paths relative to where root .git folder is located
+F <- is_git_root$make_fix_file() 
+# Example usage: F("Data/Raw") , F("Data/Processed")
+
 # Load feather data
-wrk.data <- setDT(read_feather(glue("D:/Data Science/Athletics Data/Project Files/athletics_data_analysis/Data/Raw/raw.AllInterclubResults.feather")))
+wrk.data <- setDT(read_feather(glue(F("Data/Raw/raw.AllInterclubResults.feather"))))
 
 # Check over the dataset and identify the state of variables in the dataset
 #wrd=GetNewWrd()
@@ -153,7 +158,7 @@ wrk.01DataPrep_4 <- wrk.01DataPrep_3 %>%
   
 
 # Save Feather file to store progress:
-write_feather(wrk.01DataPrep_4, "D:/Data Science/Athletics Data/Project Files/athletics_data_analysis/Data/Processed/wrk.01DataPrep_4.feather")
+write_feather(wrk.01DataPrep_4, F("Data/Processed/wrk.01DataPrep_4.feather"))
 
 # ======================================================================================================================== #
 # END OF PROGRAM #
