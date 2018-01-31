@@ -16,6 +16,8 @@ library(DescTools)
 library(RDCOMClient)
 library(glue)
 library(rprojroot)
+library(leaflet)
+library(tidyr)
 `%ni%` <- Negate(`%in%`)
 
 
@@ -64,7 +66,12 @@ wrk.03DataTrans_03 <- wrk.03DataTrans_02 %>%
   mutate(NUMRoundEventFinishOrderPoints11AWDAdj = case_when(ORDRoundEventFinishOrderPointsAWDAdj == 1 ~ 11, ORDRoundEventFinishOrderPointsAWDAdj %in% c(2,3,4,5,6,7,8,9) ~ 11-ORDRoundEventFinishOrderPointsAWDAdj, ORDRoundEventFinishOrderPointsAWDAdj >=10 ~ 1)) %>%
   mutate(NUMRoundEventFinishOrderPoints11AWDAdj = ifelse(BINValidEventAttempt == 0 | ORDRoundEventFinishOrderPointsAWDAdj == 0, 0, NUMRoundEventFinishOrderPoints11AWDAdj)) %>% #if invalid attempt or invitation, award no points.
   #if athlete competing invitationally, award no points.
-  ungroup() 
+  ungroup() %>%
+  separate(CATVenueMapCoord, c("NUMVenueLatitude", "NUMVenueLongitude"), ",", extra = "merge", remove = FALSE) %>%
+  mutate(NUMVenueLongitude = as.numeric(NUMVenueLongitude), NUMVenueLatitude = as.numeric(NUMVenueLatitude) )
+
+# Save checkpoint dataset to CSV. We will use this dataset as the base for all analysis:
+write.csv(wrk.03DataTrans_03, F("Data/Processed/wrk.03DataTrans_ForAnalysis.csv") , row.names = FALSE) 
 
 # ======================================================================================================= #
 # who is the highest point scoring athlete, club, zone? and vs alt methods of point calc?
@@ -167,6 +174,40 @@ wrk.03DataTrans_SUMM01A <- wrk.03DataTrans_03 %>%
 
 # ======================================================================================================= #
 
+  # maps:   REF  https://allthisblog.wordpress.com/2016/10/12/r-311-with-leaflet-tutorial/
+  #              https://rstudio.github.io/leaflet/markers.html  
+  
+  # initiate the leaflet instance and store it to a variable
+  m = leaflet()
+  # we want to add map tiles so we use the addTiles() function - the default is openstreetmap
+  m = addTiles(m)
+  # we can add markers by using the addMarkers() function
+  #m = addMarkers(m, lng=-123.256168, lat=49.266063, popup="T")
+  
+  # we can "run"/compile the map, by running the printing it
+  m
+  # Now we are going to define some colors using leaflet's special colorFactor()
+  colorFactors = colorFactor(c('red', 'orange', 'purple', 'blue', 'pink', 'brown', 'yellow', 'green'),
+                             domain = wrk.03DataTrans_03$CATCompetitionVenue)
+  
+  # Add points to the map:
+  m = addCircleMarkers(m, 
+                       lng = 143.8660, #wrk.03DataTrans_03$NUMVenueLongitude, # we feed the longitude coordinates 
+                       lat = -37.56939,  #wrk.03DataTrans_03$NUMVenueLatitude,
+                       popup = "Ballarat", wrk.03DataTrans_03$CATVenueZone, 
+                       radius = 2, 
+                       stroke = FALSE, 
+                       fillOpacity = 0.75, 
+                       color = "red", #colorFactors(wrk.03DataTrans_03$CATCompetitionVenue),
+                       group = "Venues"
+  )
+  # Show points from dataset
+  leaflet(data = wrk.03DataTrans_03) %>% 
+    addTiles() %>%
+    addMarkers(~NUMVenueLongitude, ~NUMVenueLatitude, popup = ~as.character(CATCompetitionVenue), label = ~as.character(CATCompetitionVenue))
+  
+
+  
 # how many competitions per athlete [round & venue as one key]. Total number and rolling total.
 
 # how many events per athlete, for round & season. Total number and rolling total.
