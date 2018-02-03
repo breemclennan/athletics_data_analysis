@@ -18,6 +18,7 @@ library(glue)
 library(rprojroot)
 library(leaflet)
 library(tidyr)
+library(png)
 `%ni%` <- Negate(`%in%`)
 
 
@@ -71,7 +72,8 @@ wrk.03DataTrans_03 <- wrk.03DataTrans_02 %>%
   mutate(NUMVenueLongitude = as.numeric(NUMVenueLongitude), NUMVenueLatitude = as.numeric(NUMVenueLatitude) )
 
 # Save checkpoint dataset to CSV. We will use this dataset as the base for all analysis:
-write.csv(wrk.03DataTrans_03, F("Data/Processed/wrk.03DataTrans_ForAnalysis.csv") , row.names = FALSE) 
+write.csv(wrk.03DataTrans_03, F("Data/Processed/wrk.03DataTrans_ForAnalysis.csv") , row.names = FALSE) # Save Feather file to store progress:
+write_feather(wrk.03DataTrans_03, F("Data/Processed/wrk.03DataTrans_ForAnalysis.feather"))
 
 # ======================================================================================================= #
 # who is the highest point scoring athlete, club, zone? and vs alt methods of point calc?
@@ -202,7 +204,31 @@ wrk.03DataTrans_SUMM01A <- wrk.03DataTrans_03 %>%
                        group = "Venues"
   )
   # Show points from dataset
-  leaflet(data = wrk.03DataTrans_03) %>% 
+  wrk.03DataTrans_PlotMap <- wrk.03DataTrans_03 %>%
+    filter(KEYRegistrationNumber %ni% c("0")) %>% #remove teams
+    group_by(ORDCompetitionRound, CATCompetitionVenue, NUMVenueLatitude, NUMVenueLongitude) %>%
+    #  mutate(BINValidEventAttempt = as.numeric(BINValidEventAttempt),
+    #         BINInvitationEventOrAthlete = as.numeric(BINInvitationEventOrAthlete),
+    #         BINAthleteCompeteAwayVenue = as.numeric(BINAthleteCompeteAwayVenue)) %>%
+    #  mutate(NUMEventValidCompletionRate_RV = sum(as.numeric(BINValidEventAttempt))) %>%
+    summarise(NUMAthletes_RV = n_distinct(KEYRegistrationNumber),
+              NUMEventsParticipated_RV = n(),
+              NUMAvgWindReading_RV = round(mean(!is.na(as.numeric(NUMWindReading))), digits = 3),
+              #,
+              #           NUMEventValidCompletionRate_RV = mean(NUMEventValidCompletionRate_RV)
+              #           NUMEventValidCompletionRate_RV = round(mean(as.numeric(BINValidEventAttempt)), digits = 3),
+              #            NUMInvitationParticipationRate_RV = round(mean(as.numeric(BINInvitationEventOrAthlete)), digits = 3),
+              #           NUMAthletesCompeteAway_RV = round(mean(as.numeric(BINAthleteCompeteAwayVenue)), digits = 3)
+    )
+  
+  icons <- awesomeIcons(
+    icon = 'ios-close',
+    iconColor = 'black',
+    library = 'ion', #fa or glphicon
+    markerColor = getColor(wrk.03DataTrans_PlotMap)
+  )
+  
+  leaflet(data = wrk.03DataTrans_PlotMap) %>% 
     addTiles() %>%
     addMarkers(~NUMVenueLongitude, ~NUMVenueLatitude, popup = ~as.character(CATCompetitionVenue), label = ~as.character(CATCompetitionVenue))
   

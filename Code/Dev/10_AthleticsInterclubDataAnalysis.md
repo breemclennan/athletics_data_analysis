@@ -11,9 +11,9 @@ The purpose of this project is to uncover and document valued actionable insight
 Key questions to guide the analysis
 -----------------------------------
 
--   What are the athlete attendance rates at competitions during the season? o Context: Competition pre-entry is a new initiative this season for 2017-18. Athletes are encouraged to pre-enter 3 days before the start of interclub competition. This allows officials sufficient time to create seedings and start lists for competition events. Of the number of pre-entries, can we link this to the actual performance results to identify if an athlete followed through? Gaps in this would indicate either “no-show” or athlete pre-entry on the day.
+-   What are the athlete attendance rates at competitions during the season? o Context: Competition pre-entry is a new initiative this season for 2017-18. Athletes are encouraged to pre-enter 3 days before the start of interclub competition. This allows officials sufficient time to create seedings and start lists for competition events. Of the number of pre-entries, can we link this to the actual performance results to identify if an athlete followed through? Gaps in this would indicate either "no-show" or athlete pre-entry on the day.
 -   From the number of total registered athletes this season, how many athletes have competed in at least one competition? o Follow up competition; how many athletes per accumulated numbers of competition?
--   How many athletes compete at “away” venues. o Context: Amended rules for interclub 2017-18, athletes may now compete at other venues which are not their club’s “home” venue or region, without point scoring penalty. o Technical: In analysis, we can plot the geographical location for venues. We can construct a reference table for this.
+-   How many athletes compete at "away" venues. o Context: Amended rules for interclub 2017-18, athletes may now compete at other venues which are not their club's "home" venue or region, without point scoring penalty. o Technical: In analysis, we can plot the geographical location for venues. We can construct a reference table for this.
 -   Do athletes compete at more than one venue per round of interclub competition? o Do points get awarded?
 -   Do athletes compete twice in the same event? Either as same age group or different?
 -   Do particular track and field events group together in participation rates? What are the common event sequences and pathways? o Context: This will be bound by interclub round and program o Technical: We will need to overlay the program time tables by venue, round and program number
@@ -36,15 +36,15 @@ Context specific process flow for this analysis
 
 6.  Prepare data
 
-    • Check point: Descriptive statistics on raw data
+    . Check point: Descriptive statistics on raw data
 7.  Merge data
 
-    • Check point: Descriptive statistics on merged data
+    . Check point: Descriptive statistics on merged data
 8.  Transform data
 
 9.  Model data (iterative)
 
-    • Consider feature engineering • Consider range and scaling of data
+    . Consider feature engineering . Consider range and scaling of data
 10. Prepare report
 11. Peer review
 12. Publish

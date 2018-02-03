@@ -1,83 +1,208 @@
 ---
 title: "Athletics Interclub Results Data Analysis"
-output: github_document
+author: Bree McLennan
+date: 01 February 2018
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    theme: cerulean
+    highlight: haddock
+    df_print: paged
+    self_contained: yes
+    fig_width: 7
+    fig_height: 6
+    fig_caption: true
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+options(scipen = 10000) #prevent y axis from scaling
+library(dplyr)
+library(purrr)
+library(data.table)
+library(feather)
+library(DescTools)
+library(RDCOMClient)
+library(glue)
+library(rprojroot)
+library(leaflet)
+library(tidyr)
+library(knitr)    # For knitting document and include_graphics function
+library(ggplot2)  # For plotting
+library(png)      # For grabbing the dimensions of png files
+library(jpeg)
+`%ni%` <- Negate(`%in%`)
+# Define a function that computes file paths relative to where root .git folder is located
+F <- is_git_root$make_fix_file() 
+# Example usage: F("Data/Raw") , F("Data/Processed")
+
+# Load feather data
+wrk.03DataTrans_03 <- setDT(read_feather(glue(F("Data/Processed/wrk.03DataTrans_ForAnalysis.feather"))))
+
+image01_path <- F("Docs/DataReport/Hurdles1.jpg")
+include_graphics(image01_path)
 ```
 
-## Objective & Purpose of the Analysis
+```{r image01, echo=FALSE}
+include_graphics(image01_path)
+```
 
-The objective is to explore the interclub athletic competition results data for the complete 2017-18 season and identify:
--	How athletes are naturally grouped in terms of performance and other factors
--	Basic descriptive statistics across the entire dataset
-  o	How many competitions per athlete
-  o	How many events per athlete
-  o	Min, max, quartiles, medians for each event
-  o	Geography statistics: By whole of Victorian state and by competition zone/region
--	Further opportunities for athletics data analysis
+
+## Purpose & objective of this analysis
 
 The purpose of this project is to uncover and document valued actionable insights which are contained within the available source data for the benefit of the target audience.
 
+The target audience includes coaches, personal trainers, athletes, ahletics governing body officials, interested members of the public, sports enthusiasts, sports statisticians and data scientists.
 
-## Key questions to guide the analysis
+The objective is to explore Victorian interclub athletic competition results data for the complete 2017-18 season and identify:
 
--	What are the athlete attendance rates at competitions during the season?
-  o	Context: Competition pre-entry is a new initiative this season for 2017-18. Athletes are encouraged to pre-enter 3 days before the start of   interclub competition. This allows officials sufficient time to create seedings and start lists for competition events. Of the number of pre-entries, can we link this to the actual performance results to identify if an athlete followed through? Gaps in this would indicate either "no-show" or athlete pre-entry on the day.
--	From the number of total registered athletes this season, how many athletes have competed in at least one competition?
-  o	Follow up competition; how many athletes per accumulated numbers of competition?
--	How many athletes compete at "away" venues. 
-  o	Context: Amended rules for interclub 2017-18, athletes may now compete at other venues which are not their club's "home" venue or region, without point scoring penalty.
-  o	Technical: In analysis, we can plot the geographical location for venues. We can construct a reference table for this.
--	Do athletes compete at more than one venue per round of interclub competition?
-  o	Do points get awarded?
--	Do athletes compete twice in the same event? Either as same age group or different?
--	Do particular track and field events group together in participation rates? What are the common event sequences and pathways?
-  o	Context: This will be bound by interclub round and program
-  o	Technical: We will need to overlay the program time tables by venue, round and program number
--	Do athletes who are being coached record better performances?
-  o	Technical: This will require a method of being able to link athlete with coach.
--	Does weather have an impact on competition performances? If so, by how much?
-  o	Technical: Wind readings will be available for some events, for general weather conditions we will need to link in weather history.
-Specific questions from Geelong Athletics
--	Can we calculate points based on finishing order to assist with our end of season awards?
-  o	Technical: We need to obtain and unpack the specific business rules Geelong Athletics use to achieve this.
+  *	Natural groupings & patterns within the data
+  *	Basic descriptive statistics across the entire dataset
+    +	How many competitions per athlete
+    +	How many events per athlete
+    +	Min, max, averages and quartiles for each event
+    +	Geography statistics: By whole of Victorian state and by competition zone/region
+  *	Further opportunities for athletics data analysis
 
+**Important note:** This analysis is an independent analysis conducted by Bree McLennan, using publically available data from the [Athletics Victoria Website](http://athsvic.org.au/calendar-results/). This analysis does not represent the opinions of Athletics Victoria.
+
+## Key questions from the target audience to guide this analysis
+
+  1. What are the participation rates at interclub competitions?
+    + Can we break this down by zones and clubs?
+    + How many athletes participated in all rounds of competition?
+    + How many athletes competed at "away" venues?
+  2. How many opportunities are there for each event type?
+    + Can we see stats by event grouping?
+  3. How many incomplete events or invalid event attempts occurred?
+  4. Is there any pattern to performances as the season progresses?
+  5. How many venues are involved throughout the season?
+    + What's the "windiest" venue?
+  6. Can we see how points are distributed for performances?
+    + What other alternatives to point scoring are there?
+  
 
 ## Context specific process flow for this analysis
-  1.	Obtain target audience input and finalise project objective
-  2.	Obtain source data
-  3.	Risk assessment on source data with respect to objective
-  4.	Load data, prepare raw dataset
-  5.	Check data
-  6.	Prepare data
-  .	Check point: Descriptive statistics on raw data
-  7.	Merge data
-  .	Check point: Descriptive statistics on merged data
-  8.	Transform data
-  9.	Model data (iterative)
-  .	Consider feature engineering
-  .	Consider range and scaling of data
-  10.	Prepare report
-  11.	Peer review
-  12.	Publish
-  13.	Obtain feedback, review and apply updates where appropriate
+
+  0. Define the parameters: Purpose, objective, and rough timelines
+  1. Obtain target audience input
+  2. Obtain source data [Athletics Victoria "AV Shield 2017-18"](http://athsvic.org.au/events/competitions/avcompetitions/av-shield/)
+  3. Conduct a risk assessment on source data with respect to purpose & objective
+    + Discarding any data which is not relevant to the analysis guiding questions
+  4. Technical setup to commence analysis:
+    + [Github repository](https://github.com/breemclennan/athletics_data_analysis)
+    + R Project file
+        - Load data >> Prepare data >> Merge reference data >> Transform data >> Analyse data
+  5. Explore data & key guiding questions to discover answers
+  6. Peer review & publish analysis and findings
+  7. Obtain audience feedback, review and apply updates where appropriate
+    + Opportunities to subsequent analysis
 
 
+## Analysis data considerations
 
-You can include R code in the document as follows:
+The data for interclub rounds 1 to 12 is contained in individual csv files, by round, for each participating Victorian region.
 
-```{r cars}
-summary(cars)
+General description of the source data:
+  
+  * Round 7 is excluded because it was cancelled due to extreme weather.
+  * There are 77 individual csv files for season 2017-18
+  * The CSV file contents can be described as: performance results for each athlete by event completed, for a round of competition for a               specific region. Season 2017-18.
+  * There are 21 variables in the source data, ranging from athlete registration ID, event specification, performance result, age group, club,         venue, wind reading and completion status
+  
+Technical approach to creating the analysis data:
+
+  * Append all CSVs together to create one source dataset
+  * Re-name and format variables for data type consistency
+  * Binarise variables where appropriate
+  * Create hierarchial groupings for event types, veues, and age groups
+  * Triage missing data (careful application of subject matter expertise)
+    + Particularly with AWD classification performance adjustments, venue names, event specifications and event status (DNQ, INV)
+  * Merging on reference data by created keys:
+    + Club details (shortname, full name, zone)
+    + Venue details (geographical location, track type)
+    + Performance adjustment (AWD & masters age group athletes)
+  * Calculate athlete finishing order per event and point scoring methods
+
+## Sample of the created analysis dataset
+
+```{r wrk.03DataTrans_03}
+# Randomly sample 6 rows from the analysis dataset
+head(wrk.03DataTrans_03[sample(nrow(wrk.03DataTrans_03))])
 ```
 
-## Including Plots
+## Exploring the key questions
 
-You can also embed plots, for example:
+  1. What are the participation rates at interclub competitions?
+    + Can we break this down by zones and clubs?
+    + How many athletes participated in all rounds of competition?
+    + How many athletes competed at "away" venues?
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r rows.print=12, echo=TRUE}
+
+# Participation rates
+wrk.03DataTrans_Q1A <- wrk.03DataTrans_03 %>%
+  filter(KEYRegistrationNumber %ni% c("0")) %>% #remove teams
+  group_by(ORDCompetitionRound) %>%
+  summarise(NUMAthletes_RV = n_distinct(KEYRegistrationNumber),
+            NUMTotalEventParticipation = n())
+wrk.03DataTrans_Q1A
+
+plot(wrk.03DataTrans_Q1A)
+
+#table(wrk.03DataTrans_03$ORDCompetitionRound, n_distinct(wrk.03DataTrans_03$CATAthleteRegisteredClub))
+
+# Athletes competing in all rounds of competition
+wrk.03DataTrans_Q1B <- wrk.03DataTrans_03 %>%
+  filter(KEYRegistrationNumber %ni% c("0")) %>% #remove teams
+  group_by(KEYRegistrationNumber) %>%
+  summarise(NUMAthletesRounds = n_distinct(ORDCompetitionRound)) %>%
+  filter(NUMAthletesRounds >= 11) %>%
+  summarise(NUMTotalAthletesAllRounds = n(),
+            NUMRounds = max(NUMAthletesRounds))
+            
+wrk.03DataTrans_Q1B
+
+# How many athletes competed at away venues?
+
+wrk.03DataTrans_Q1C <- wrk.03DataTrans_03 %>%
+  filter(KEYRegistrationNumber %ni% c("0")) %>% #remove teams
+  group_by(KEYRegistrationNumber) %>%
+  summarise(NUMAthletesAway = sum(as.numeric(BINAthleteCompeteAwayVenue))) %>%
+  filter(NUMAthletesAway >1) # TODO: fix the code which buids this variable.
+           
+wrk.03DataTrans_Q1C
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+  2. How many opportunities are there for each event type?
+    + Can we see stats by event grouping?
+
+```{r}
+
+
+
+```
+
+
+  3. How many incomplete events or invalid event attempts occurred?
+
+
+```{r}
+
+
+
+```
+
+
+  4. Is there any pattern to performances as the season progresses?
+
+```{r}
+
+
+
+```
+
