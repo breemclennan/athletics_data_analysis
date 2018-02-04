@@ -12,7 +12,7 @@ output:
     df_print: paged
     self_contained: yes
     fig_width: 7
-    fig_height: 6
+    fig_height: 8
     fig_caption: true
 ---
 
@@ -66,22 +66,28 @@ The objective is to explore Victorian interclub athletic competition results dat
     +	Geography statistics: By whole of Victorian state and by competition zone/region
   *	Further opportunities for athletics data analysis
 
-**Important note:** This analysis is an independent analysis conducted by Bree McLennan, using publically available data from the [Athletics Victoria Website](http://athsvic.org.au/calendar-results/). This analysis does not represent the opinions of Athletics Victoria.
+**Important note:** This analysis is a not-for-profit independent analysis conducted by Bree McLennan, using publically available data from the [Athletics Victoria Website](http://athsvic.org.au/calendar-results/). This analysis does not represent the opinions of Athletics Victoria.
 
 ## Key questions from the target audience to guide this analysis
 
   1. What are the participation rates at interclub competitions?
     + Can we break this down by zones and clubs?
+    + Whats the distribution of total competitions athletes participate in during the season?
+      - How many events per competition do athletes partake in?
     + How many athletes participated in all rounds of competition?
-    + How many athletes competed at "away" venues?
+    + How many athletes competed at "away" venues? (ignoring metro zone v zone)
   2. How many opportunities are there for each event type?
     + Can we see stats by event grouping?
+    + What's the most poplar event?
   3. How many incomplete events or invalid event attempts occurred?
   4. Is there any pattern to performances as the season progresses?
   5. How many venues are involved throughout the season?
     + What's the "windiest" venue?
   6. Can we see how points are distributed for performances?
     + What other alternatives to point scoring are there?
+  7. Miscellaneous:
+    + Do athletes compete at more than one venue per round of competition?
+    + Do athletes compete multiple times in the same event in a round of competition?
   
 
 ## Context specific process flow for this analysis
@@ -129,30 +135,49 @@ Technical approach to creating the analysis data:
 ## Sample of the created analysis dataset
 
 ```{r wrk.03DataTrans_03}
+# Dataset structure
+glimpse(tbl_df(wrk.03DataTrans_03))
+
 # Randomly sample 6 rows from the analysis dataset
 head(wrk.03DataTrans_03[sample(nrow(wrk.03DataTrans_03))])
+
 ```
 
 ## Exploring the key questions
 
   1. What are the participation rates at interclub competitions?
     + Can we break this down by zones and clubs?
+    + Whats the distribution of total competitions athletes participate in during the season?
+      - How many events per competition do athletes partake in?
     + How many athletes participated in all rounds of competition?
-    + How many athletes competed at "away" venues?
+    + How many athletes competed at "away" venues? (ignoring metro zone v zone)
 
 ```{r rows.print=12, echo=TRUE}
 
-# Participation rates
+# Participation rates for each round
 wrk.03DataTrans_Q1A <- wrk.03DataTrans_03 %>%
   filter(KEYRegistrationNumber %ni% c("0")) %>% #remove teams
   group_by(ORDCompetitionRound) %>%
-  summarise(NUMAthletes_RV = n_distinct(KEYRegistrationNumber),
-            NUMTotalEventParticipation = n())
+  summarise(NUMAthletesParticipating = n_distinct(KEYRegistrationNumber),
+            NUMTotalEventsParticipated = n())
+
+barplot(rev(wrk.03DataTrans_Q1A$NUMAthletesParticipating),
+        main = "Athlete participation by round",
+        col = rgb(0.2,0.4,0.6,0.6), horiz = TRUE , las = 1 ,
+        xlab = "Number of athletes",
+        names.arg = rev(wrk.03DataTrans_Q1A$ORDCompetitionRound))
+
 wrk.03DataTrans_Q1A
 
-plot(wrk.03DataTrans_Q1A)
+# Distribution of participation across rounds
+ # Calculate participation by athlete
+    FreqTable <-  as.data.table(xtabs(~ KEYRegistrationNumber + ORDCompetitionRound, wrk.03DataTrans_03))
+    FreqTableCast <-  dcast.data.table(FreqTable, KEYRegistrationNumber ~ as.numeric(ORDCompetitionRound), value.var = "N") 
+    FreqTableCast_1 <- FreqTableCast %>% 
+      mutate(NUMTotalEventsPartipated = rowSums(FreqTableCast[, c(2:12)])) %>%
+      mutate(NUMTotalRoundsParticipated = apply(FreqTableCast[, c(2:12)], 1, function(a) sum(a > 0)) )
 
-#table(wrk.03DataTrans_03$ORDCompetitionRound, n_distinct(wrk.03DataTrans_03$CATAthleteRegisteredClub))
+head(FreqTableCast_1)
 
 # Athletes competing in all rounds of competition
 wrk.03DataTrans_Q1B <- wrk.03DataTrans_03 %>%
@@ -168,23 +193,34 @@ wrk.03DataTrans_Q1B
 # How many athletes competed at away venues?
 
 wrk.03DataTrans_Q1C <- wrk.03DataTrans_03 %>%
-  filter(KEYRegistrationNumber %ni% c("0")) %>% #remove teams
-  group_by(KEYRegistrationNumber) %>%
-  summarise(NUMAthletesAway = sum(as.numeric(BINAthleteCompeteAwayVenue))) %>%
-  filter(NUMAthletesAway >1) # TODO: fix the code which buids this variable.
+  filter(KEYRegistrationNumber %ni% c("0") & BINAthleteCompeteAwayVenue == 1) %>% #remove teams
+  group_by(BINAthleteCompeteAwayVenue) %>%
+  summarise(NUMAthletesAway = n_distinct(KEYRegistrationNumber))
            
 wrk.03DataTrans_Q1C
 
 ```
 
-
   2. How many opportunities are there for each event type?
     + Can we see stats by event grouping?
+    + What's the most poplar event?
 
-```{r}
+```{r rows.print=12, echo=TRUE}
+# Participation by event
+wrk.03DataTrans_Q2A <- wrk.03DataTrans_03 %>%
+  group_by(ORDCompetitionRound, CATEventFullName) %>%
+  summarise(NUMAthletesParticipating = n_distinct(KEYRegistrationNumber),
+            NUMTotalEventsParticipated = n())
 
+wrk.03DataTrans_Q2A
 
+# The most popular events   TODO:FIX
+wrk.03DataTrans_Q2B <- wrk.03DataTrans_Q2A %>%
+  group_by(CATEventFullName) %>%
+  summarise(NUMTotalEventsParticipated = n()) %>%
+  arrange(desc(NUMTotalEventsParticipated))
 
+wrk.03DataTrans_Q2B
 ```
 
 
@@ -192,8 +228,12 @@ wrk.03DataTrans_Q1C
 
 
 ```{r}
-
-
+# incomplete events & invalid attempts
+  wrk.03DataTrans_Q3A <- wrk.03DataTrans_03 %>%
+    filter(BINValidEventAttempt == 0 & CATAthleteEventStatus %ni% c("OK"))  %>%
+    group_by(CATEventFullName, CATAthleteEventStatus) %>%
+    summarise(NUMEventStatus = n()) 
+wrk.03DataTrans_Q3A
 
 ```
 
@@ -206,3 +246,101 @@ wrk.03DataTrans_Q1C
 
 ```
 
+  5. How many venues are involved throughout the season?
+    + What's the "windiest" venue?
+
+```{r}
+
+# Setup data to create map plot
+wrk.03DataTrans_PlotMap <- wrk.03DataTrans_03 %>%
+    filter(KEYRegistrationNumber %ni% c("0")) %>% #remove teams
+    group_by(ORDCompetitionRound, CATCompetitionVenue, NUMVenueLatitude, NUMVenueLongitude) %>%
+    summarise(NUMAthletes_RV = n_distinct(KEYRegistrationNumber),
+              NUMEventsParticipated_RV = n(),
+              NUMAvgWindReading_RV = round(mean(!is.na(as.numeric(NUMWindReading))), digits = 3)
+    )
+
+# Create a map and plot all venues used during the season
+leaflet(data = wrk.03DataTrans_PlotMap) %>% 
+    addTiles() %>%
+    addMarkers(~NUMVenueLongitude, ~NUMVenueLatitude, popup = ~as.character(CATCompetitionVenue), label = ~as.character(CATCompetitionVenue))
+  
+
+# The windiest venue
+wrk.03DataTrans_PlotMap <- arrange(wrk.03DataTrans_PlotMap, desc(NUMAvgWindReading_RV))
+wrk.03DataTrans_PlotMap
+```
+
+
+  6. Can we see how points are distributed for performances?
+    + What other alternatives to point scoring are there?
+    
+    
+```{r}
+
+# Setup calculated fields
+wrk.03DataTrans_SUMM01A <- wrk.03DataTrans_03 %>%
+  filter(KEYRegistrationNumber %ni% c("0")) %>% #remove teams
+  group_by(KEYRegistrationNumber, CATAgeGroup, CATAthleticClubName, CATClubZoneName) %>%
+  summarise(NUMTotalPoints11 = sum(NUMEventFinishOrderPoints11, na.rm = TRUE), 
+            NUMTotalAVPointsAwarded = sum(NUMPointsAwarded, na.rm = TRUE), 
+            NUMTotalRoundPoints11 = sum(NUMRoundEventFinishOrderPoints11, na.rm = TRUE),
+            NUMTotalRoundPoints11AWDAdj = sum(NUMRoundEventFinishOrderPoints11AWDAdj, na.rm = TRUE)) %>%
+  arrange(desc(NUMTotalPoints11))
+
+    par(mfrow = c(4,1))
+    # BY ATHLETE / REGISTRATION ID
+    # Horizontal Barplot [Method: 1st=11, 2-9=11minus finish order, >10 = 1 point, event/venue based]:
+    barplot(rev(wrk.03DataTrans_SUMM01A$NUMTotalPoints11[1:10]),
+            main = "AV Shield 2017-18: Points awarded [1st=11]",
+            col = rgb(0.2,0.4,0.6,0.6), horiz = TRUE , las = 1 ,
+            xlab = "Total Points Awarded [11]",
+            names.arg = rev(wrk.03DataTrans_SUMM01A$KEYRegistrationNumber[1:10]))
+    head(wrk.03DataTrans_SUMM01A, n = 10)
+    
+    # Horizontal Barplot [Method Decathlon WR, AV]:
+    wrk.03DataTrans_SUMM01B <- arrange(wrk.03DataTrans_SUMM01A, desc(NUMTotalAVPointsAwarded))
+    
+    barplot(rev(wrk.03DataTrans_SUMM01B$NUMTotalAVPointsAwarded[1:10]),
+            main = "AV Shield 2017-18: Points awarded [AV Shield]",
+            col = rgb(0.2,0.4,0.6,0.6), horiz = TRUE , las = 1 ,
+            xlab = "Total Points Awarded [AV Shield]",
+            names.arg = rev(wrk.03DataTrans_SUMM01B$KEYRegistrationNumber[1:10]))
+    head(wrk.03DataTrans_SUMM01B, n = 10)
+    
+    # Horizontal Barplot [Method 1st=11, 2-9=11minus finish order, >10 = 1 point, by Round]:
+    wrk.03DataTrans_SUMM01C <- arrange(wrk.03DataTrans_SUMM01A, desc(NUMTotalRoundPoints11))
+    
+    barplot(rev(wrk.03DataTrans_SUMM01C$NUMTotalRoundPoints11[1:10]),
+            main = "AV Shield 2017-18: Points awarded [1st=11, round]",
+            col = rgb(0.2,0.4,0.6,0.6), horiz = TRUE , las = 1 ,
+            xlab = "Total Points Awarded [11 by round]",
+            names.arg = rev(wrk.03DataTrans_SUMM01C$NUMTotalRoundPoints11[1:10]))
+    head(wrk.03DataTrans_SUMM01C, n = 10)
+    
+    # Horizontal Barplot [Method: 1st=11, 2-9=11minus finish order, >10 = 1 
+    #                     point, with AWD performance Adjust by Round]:
+    wrk.03DataTrans_SUMM01D <- arrange(wrk.03DataTrans_SUMM01A, desc(NUMTotalRoundPoints11AWDAdj))
+    
+    barplot(rev(wrk.03DataTrans_SUMM01D$NUMTotalRoundPoints11AWDAdj[1:10]),
+            main = "AV Shield 2017-18: Points awarded [AWD Adjust,1st=11, round]",
+            col = rgb(0.2,0.4,0.6,0.6), horiz = TRUE , las = 1 ,
+            xlab = "Total Points Awarded [AWD Adjust & 11 by round]",
+            names.arg = rev(wrk.03DataTrans_SUMM01D$NUMTotalRoundPoints11AWDAdj[1:10]))
+    head(wrk.03DataTrans_SUMM01D, n = 10)
+
+
+```
+
+  7. Miscellaneous:
+    + Do athletes compete at more than one venue per round of competition?
+    + Do athletes compete multiple times in the same event in a round of competition?
+
+```{r}
+
+
+
+```
+
+## Summary notes & future analyses
+TODO: add in lessons learned, traps for young players

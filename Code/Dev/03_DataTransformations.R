@@ -89,42 +89,42 @@ wrk.03DataTrans_SUMM01A <- wrk.03DataTrans_03 %>%
     par(mfrow = c(2,2))
     ### BY ATHLETE / REGISTRATION ID
     # Horizontal Barplot [Method 11]:
-    barplot(rev(wrk.03DataTrans_SUMM01A$NUMTotalPoints11[1:20]),
-            main = "AV Interclub 2017-18: Points awarded [11-1st]",
+    barplot(rev(wrk.03DataTrans_SUMM01A$NUMTotalPoints11[1:10]),
+            main = "AV Shield 2017-18: Points awarded [1st=11]",
             col = rgb(0.2,0.4,0.6,0.6), horiz = TRUE , las = 1 ,
             xlab = "Total Points Awarded [11]",
-            names.arg = rev(wrk.03DataTrans_SUMM01A$KEYRegistrationNumber[1:20]))
-    head(wrk.03DataTrans_SUMM01A, n = 20)
+            names.arg = rev(wrk.03DataTrans_SUMM01A$KEYRegistrationNumber[1:10]))
+    head(wrk.03DataTrans_SUMM01A, n = 10)
     
     # Horizontal Barplot [Method Decathlon WR, AV]:
     wrk.03DataTrans_SUMM01B <- arrange(wrk.03DataTrans_SUMM01A, desc(NUMTotalAVPointsAwarded))
     
-    barplot(rev(wrk.03DataTrans_SUMM01B$NUMTotalAVPointsAwarded[1:20]),
-            main = "AV Interclub 2017-18: Points awarded [AV Shield]",
+    barplot(rev(wrk.03DataTrans_SUMM01B$NUMTotalAVPointsAwarded[1:10]),
+            main = "AV Shield 2017-18: Points awarded [AV Shield]",
             col = rgb(0.2,0.4,0.6,0.6), horiz = TRUE , las = 1 ,
             xlab = "Total Points Awarded [AV Shield]",
-            names.arg = rev(wrk.03DataTrans_SUMM01B$NUMTotalAVPointsAwarded[1:20]))
-    head(wrk.03DataTrans_SUMM01B, n = 20)
+            names.arg = rev(wrk.03DataTrans_SUMM01B$KEYRegistrationNumber[1:10]))
+    head(wrk.03DataTrans_SUMM01B, n = 10)
     
     # Horizontal Barplot [Method 11 by Round]:
     wrk.03DataTrans_SUMM01C <- arrange(wrk.03DataTrans_SUMM01A, desc(NUMTotalRoundPoints11))
     
-    barplot(rev(wrk.03DataTrans_SUMM01C$NUMTotalRoundPoints11[1:20]),
-            main = "AV Interclub 2017-18: Points awarded [11-1st by round]",
+    barplot(rev(wrk.03DataTrans_SUMM01C$NUMTotalRoundPoints11[1:10]),
+            main = "AV Shield 2017-18: Points awarded [1st=11, round]",
             col = rgb(0.2,0.4,0.6,0.6), horiz = TRUE , las = 1 ,
             xlab = "Total Points Awarded [11 by round]",
-            names.arg = rev(wrk.03DataTrans_SUMM01C$NUMTotalRoundPoints11[1:20]))
-    head(wrk.03DataTrans_SUMM01C, n = 20)
+            names.arg = rev(wrk.03DataTrans_SUMM01C$NUMTotalRoundPoints11[1:10]))
+    head(wrk.03DataTrans_SUMM01C, n = 10)
     
     # Horizontal Barplot [Method 11 with AWD performance Adjust by Round]:
     wrk.03DataTrans_SUMM01D <- arrange(wrk.03DataTrans_SUMM01A, desc(NUMTotalRoundPoints11AWDAdj))
     
-    barplot(rev(wrk.03DataTrans_SUMM01D$NUMTotalRoundPoints11AWDAdj[1:20]),
-            main = "AV Interclub 2017-18: Points awarded [AWD Adjust & 11-1st by round]",
+    barplot(rev(wrk.03DataTrans_SUMM01D$NUMTotalRoundPoints11AWDAdj[1:10]),
+            main = "AV Shield 2017-18: Points awarded [AWD Adjust,1st=11, round]",
             col = rgb(0.2,0.4,0.6,0.6), horiz = TRUE , las = 1 ,
             xlab = "Total Points Awarded [AWD Adjust & 11 by round]",
-            names.arg = rev(wrk.03DataTrans_SUMM01D$NUMTotalRoundPoints11AWDAdj[1:20]))
-    head(wrk.03DataTrans_SUMM01D, n = 20)
+            names.arg = rev(wrk.03DataTrans_SUMM01D$NUMTotalRoundPoints11AWDAdj[1:10]))
+    head(wrk.03DataTrans_SUMM01D, n = 10)
     
   # ============ #
   ##### Total points by club and zone overall, 4 different point scoring methods:
@@ -137,43 +137,57 @@ wrk.03DataTrans_SUMM01A <- wrk.03DataTrans_03 %>%
   
  par(mfrow = c(2,2), mar = c(5,6,4,1) + .1) 
  # CLUBS TOTAL: Horizontal Barplot [Method 11 by Round]:
-  wrk.03DataTrans_SUMM02A <- arrange(wrk.03DataTrans_SUMM02A, desc(NUMTotalPoints11))
-  barplot(rev(wrk.03DataTrans_SUMM02A$NUMTotalPoints11[1:10]), #TOP 10
+  wrk.03DataTrans_SUMM02AA <- arrange(wrk.03DataTrans_SUMM02A, desc(NUMTotalPoints11))
+  barplot(rev(wrk.03DataTrans_SUMM02AA$NUMTotalPoints11[1:10]), #TOP 10
           main = "AV Interclub 2017-18: Points awarded [11-1st]",
           col = rgb(0.2,0.4,0.6,0.6), horiz = TRUE , las = 1 ,
           xlab = "Total Points Awarded [11]",
-          names.arg = rev(wrk.03DataTrans_SUMM02A$CATAthleticClubName[1:10]))
-  head(wrk.03DataTrans_SUMM02A, n = 10)
+          names.arg = rev(wrk.03DataTrans_SUMM02AA$CATAthleticClubName[1:10]))
+  head(wrk.03DataTrans_SUMM02AA, n = 10)
   
   # CLUBS TOTAL: Horizontal Barplot [Method Decathlon WR, AV]:
-  wrk.03DataTrans_SUMM02B <- arrange(wrk.03DataTrans_SUMM02A, desc(NUMTotalAVPointsAwarded)) %>%
+  wrk.03DataTrans_SUMM02BB <- arrange(wrk.03DataTrans_SUMM02A, desc(NUMTotalAVPointsAwarded)) %>%
     mutate(NUMTotalAVPointsAwarded = as.double(NUMTotalAVPointsAwarded))
-  barplot(rev(wrk.03DataTrans_SUMM02B$NUMTotalAVPointsAwarded[1:10]), #TOP 10
+  barplot(rev(wrk.03DataTrans_SUMM02BB$NUMTotalAVPointsAwarded[1:10]), #TOP 10
           main = "AV Interclub 2017-18: Points awarded [AV Shield]",
           col = rgb(0.2,0.4,0.6,0.6), horiz = TRUE , las = 1 ,
           xlab = "Total Points Awarded [AV Shield]",
-          names.arg = rev(wrk.03DataTrans_SUMM02B$CATAthleticClubName[1:10]))
-  head(wrk.03DataTrans_SUMM02B, n = 10)
+          names.arg = rev(wrk.03DataTrans_SUMM02BB$CATAthleticClubName[1:10]))
+  head(wrk.03DataTrans_SUMM02BB, n = 10)
   
   # CLUBS TOTAL: Horizontal Barplot [Method 11 by Round]:
-  wrk.03DataTrans_SUMM02C <- arrange(wrk.03DataTrans_SUMM02A, desc(NUMTotalRoundPoints11))
-  barplot(rev(wrk.03DataTrans_SUMM02C$NUMTotalRoundPoints11[1:10]), #TOP 10
+  wrk.03DataTrans_SUMM02CC <- arrange(wrk.03DataTrans_SUMM02A, desc(NUMTotalRoundPoints11))
+  barplot(rev(wrk.03DataTrans_SUMM02CC$NUMTotalRoundPoints11[1:10]), #TOP 10
           main = "AV Interclub 2017-18: Points awarded [11-1st by round]",
           col = rgb(0.2,0.4,0.6,0.6), horiz = TRUE , las = 1 ,
           xlab = "Total Points Awarded [11 by round]",
-          names.arg = rev(wrk.03DataTrans_SUMM02C$CATAthleticClubName[1:10]))
-  head(wrk.03DataTrans_SUMM02C, n = 10)
+          names.arg = rev(wrk.03DataTrans_SUMM02CC$CATAthleticClubName[1:10]))
+  head(wrk.03DataTrans_SUMM02CC, n = 10)
   
   # CLUBS TOTAL: Horizontal Barplot [Method 11 with AWD performance Adjust by Round]:
-  wrk.03DataTrans_SUMM02D <- arrange(wrk.03DataTrans_SUMM02A, desc(NUMTotalRoundPoints11AWDAdj))
-  barplot(rev(wrk.03DataTrans_SUMM02D$NUMTotalRoundPoints11AWDAdj[1:10]),
+  wrk.03DataTrans_SUMM02DD <- arrange(wrk.03DataTrans_SUMM02A, desc(NUMTotalRoundPoints11AWDAdj))
+  barplot(rev(wrk.03DataTrans_SUMM02DD$NUMTotalRoundPoints11AWDAdj[1:10]),
           main = "AV Interclub 2017-18: Points awarded [AWD Adjust & 11-1st by round]",
           col = rgb(0.2,0.4,0.6,0.6), horiz = TRUE , las = 1 ,
           xlab = "Total Points Awarded [AWD Adjust & 11 by round]",
-          names.arg = rev(wrk.03DataTrans_SUMM02D$CATAthleticClubName[1:10]))
-  head(wrk.03DataTrans_SUMM02D, n = 10)
+          names.arg = rev(wrk.03DataTrans_SUMM02DD$CATAthleticClubName[1:10]))
+  head(wrk.03DataTrans_SUMM02DD, n = 10)
 
 
+  # Calculating participation
+  FreqTable <-  as.data.table(xtabs(~ KEYRegistrationNumber + ORDCompetitionRound, wrk.03DataTrans_03))
+  FreqTableCast <-  dcast.data.table(FreqTable, KEYRegistrationNumber ~ as.numeric(ORDCompetitionRound), value.var = "N") 
+  FreqTableCast_1 <- FreqTableCast %>% 
+    mutate(NUMTotalEventsPartipated = rowSums(FreqTableCast[, c(2:12)])) %>%
+    mutate(NUMTotalRoundsParticipated = apply(FreqTableCast[, c(2:12)], 1, function(a) sum(a > 0)) )  
+  
+  wrk.03DataTrans_Q2A <- wrk.03DataTrans_03 %>%
+    group_by(ORDCompetitionRound, CATEventFullName) %>%
+    summarise(NUMAthletesParticipating = n_distinct(KEYRegistrationNumber),
+              NUMTotalEventsParticipated = n())
+  
+
+  
 # ======================================================================================================= #
 
   # maps:   REF  https://allthisblog.wordpress.com/2016/10/12/r-311-with-leaflet-tutorial/
@@ -233,32 +247,8 @@ wrk.03DataTrans_SUMM01A <- wrk.03DataTrans_03 %>%
     addMarkers(~NUMVenueLongitude, ~NUMVenueLatitude, popup = ~as.character(CATCompetitionVenue), label = ~as.character(CATCompetitionVenue))
   
 
+
   
-# how many competitions per athlete [round & venue as one key]. Total number and rolling total.
-
-# how many events per athlete, for round & season. Total number and rolling total.
-
-# how many athletes per round, per season. Is this congruent with "registered athletes"
-
-# how many athletes competed in at minimum, one round?
-
-# how many athletes competed at away venues (ignoring metro zone v zone)
-
-# do athletes compete at more than one venue per round of competition?
-
-# do athletes compete twice in the same event in a round of competition?
-
-# what is the most windy venue and event?
-
-# what is the most common event status when not "OK" ?, for which event?
-
-# what is the most participated-in track event, field event?
-
-# which athlete has the highest rate of participation?
-
-# unique rego IDs by round
-
-
 # ======================================================================================================================== #
 # END OF PROGRAM #
 # ======================================================================================================================== #
