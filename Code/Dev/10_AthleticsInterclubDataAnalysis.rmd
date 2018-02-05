@@ -179,6 +179,10 @@ wrk.03DataTrans_Q1A
 
 head(FreqTableCast_1)
 
+FreqTableCast_2 <- FreqTableCast_1 %>%
+  filter(KEYRegistrationNumber %ni% c("0")) #not including teams
+plot(FreqTableCast_2$NUMTotalRoundsParticipated, FreqTableCast_2$NUMTotalEventsPartipated )
+
 # Athletes competing in all rounds of competition
 wrk.03DataTrans_Q1B <- wrk.03DataTrans_03 %>%
   filter(KEYRegistrationNumber %ni% c("0")) %>% #remove teams
@@ -241,8 +245,28 @@ wrk.03DataTrans_Q3A
   4. Is there any pattern to performances as the season progresses?
 
 ```{r}
+# Lets take an event like 400m. Circular event, wind readings not required. Hypothesis: Good measure of speed endurance & fitness
+wrk.03DataTrans_Q4A <- wrk.03DataTrans_03 %>%
+  filter(CATEventFullName == "400 Run") %>%
+  select(ORDCompetitionRound, CATEventFullName, NUMPerformance, CATGender) #CATAgeGroup)
+  #group_by(ORDCompetitionRound, CATEventFullName) %>%
+  #summarise(NUMAvgPerformance = mean(NUMPerformance))
 
+library(ggplot2)
+ggplot(wrk.03DataTrans_Q4A, aes(x = ORDCompetitionRound, y = NUMPerformance, fill = CATGender)) +
+  geom_boxplot() +
+   scale_fill_brewer(palette = "Spectral")
 
+head(wrk.03DataTrans_Q4A)
+
+# Lets look at a power event like shot put
+wrk.03DataTrans_Q4B <- wrk.03DataTrans_03 %>%
+  filter(CATEventDiscipline == "Shot Put") %>%
+  select(ORDCompetitionRound, CATEventFullName, CATEventDiscipline, NUMPerformance, CATGender) 
+
+ggplot(wrk.03DataTrans_Q4B, aes(x = ORDCompetitionRound, y = NUMPerformance, fill = CATGender)) +
+  geom_boxplot() +
+   scale_fill_brewer(palette = "Spectral")
 
 ```
 
