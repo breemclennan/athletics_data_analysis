@@ -7,7 +7,7 @@
 #
 # ======================================================================================================================== #
 
-options(scipen = 10000) #prevent y axis from scaling
+options(scipen = 10000) #prevent y axis from scaling with scientific notation
 library(dplyr)
 library(purrr)
 library(data.table)
@@ -30,20 +30,15 @@ F <- is_git_root$make_fix_file()
 wrk.03DataTrans_00 <- setDT(read_feather(glue(F("Data/Processed/wrk.02_DataMerge_01.feather"))))
 
 #check the data before we begin to summarise
-wrd_4 = GetNewWrd(header=TRUE)
-Desc(wrk.03DataTrans_00, plotit = TRUE, maxrows = Inf, wrd = wrd_4)
+#wrd_4 = GetNewWrd(header=TRUE)
+#Desc(wrk.03DataTrans_00, plotit = TRUE, maxrows = Inf, wrd = wrd_4)
 
-# Groupings for calculations ===========
-# 1. [Complete EVENT FINISHING ORDER] ROUND > VENUE > AGE GROUP/gender > EVENT > Distance(if track)   [FOR AGE GROUP specific finish order]
-# 2. [Heat EVENT FINISHING ORDER] ROUND > VENUE > AGE GROUP/gender > EVENT > Distance(if track) > HEAT [FOR RACE SPECIFIC FINISH ORDER]
-# 3. ROUND > VENUE > GENDER > EVENT > DISTANCE                            [FOR overall ranking by gender]
-
-# FOR POINTS CALC: CHECK BUSINESS RULES.
+# FOR POINTS CALC: CHECK BUSINESS RULES IN SPECIFICATION.
 # Consider heat event finishing order + check on eligibility for athletes competing at away venue vs home.
 # REF: http://athsvic.org.au/wp-content/uploads/Scoring-2017-18-Shield.pdf
-# 1st = 11 points
-# 2nd to 9th = 11 minus finishing place = points
-# 10th and over = 1 point
+  # 1st = 11 points
+  # 2nd to 9th = 11 minus finishing place = points
+  # 10th and over = 1 point
 
 ## 1A Apply alternative point scoring mechanism. First place in age group for round/venue/event/agegroup = 11 points.
 wrk.03DataTrans_01 <- wrk.03DataTrans_00 %>%
@@ -185,7 +180,6 @@ wrk.03DataTrans_SUMM01A <- wrk.03DataTrans_03 %>%
     group_by(ORDCompetitionRound, CATEventFullName) %>%
     summarise(NUMAthletesParticipating = n_distinct(KEYRegistrationNumber),
               NUMTotalEventsParticipated = n())
-  
 
   
 # ======================================================================================================= #
@@ -193,61 +187,46 @@ wrk.03DataTrans_SUMM01A <- wrk.03DataTrans_03 %>%
   # maps:   REF  https://allthisblog.wordpress.com/2016/10/12/r-311-with-leaflet-tutorial/
   #              https://rstudio.github.io/leaflet/markers.html  
   
-  # initiate the leaflet instance and store it to a variable
-  m = leaflet()
-  # we want to add map tiles so we use the addTiles() function - the default is openstreetmap
-  m = addTiles(m)
-  # we can add markers by using the addMarkers() function
-  #m = addMarkers(m, lng=-123.256168, lat=49.266063, popup="T")
-  
-  # we can "run"/compile the map, by running the printing it
-  m
-  # Now we are going to define some colors using leaflet's special colorFactor()
-  colorFactors = colorFactor(c('red', 'orange', 'purple', 'blue', 'pink', 'brown', 'yellow', 'green'),
-                             domain = wrk.03DataTrans_03$CATCompetitionVenue)
-  
-  # Add points to the map:
-  m = addCircleMarkers(m, 
-                       lng = 143.8660, #wrk.03DataTrans_03$NUMVenueLongitude, # we feed the longitude coordinates 
-                       lat = -37.56939,  #wrk.03DataTrans_03$NUMVenueLatitude,
-                       popup = "Ballarat", wrk.03DataTrans_03$CATVenueZone, 
-                       radius = 2, 
-                       stroke = FALSE, 
-                       fillOpacity = 0.75, 
-                       color = "red", #colorFactors(wrk.03DataTrans_03$CATCompetitionVenue),
-                       group = "Venues"
-  )
-  # Show points from dataset
+  ### Seting up summary dataset for geographical plotting:
   wrk.03DataTrans_PlotMap <- wrk.03DataTrans_03 %>%
     filter(KEYRegistrationNumber %ni% c("0")) %>% #remove teams
     group_by(ORDCompetitionRound, CATCompetitionVenue, NUMVenueLatitude, NUMVenueLongitude) %>%
-    #  mutate(BINValidEventAttempt = as.numeric(BINValidEventAttempt),
-    #         BINInvitationEventOrAthlete = as.numeric(BINInvitationEventOrAthlete),
-    #         BINAthleteCompeteAwayVenue = as.numeric(BINAthleteCompeteAwayVenue)) %>%
-    #  mutate(NUMEventValidCompletionRate_RV = sum(as.numeric(BINValidEventAttempt))) %>%
     summarise(NUMAthletes_RV = n_distinct(KEYRegistrationNumber),
               NUMEventsParticipated_RV = n(),
-              NUMAvgWindReading_RV = round(mean(!is.na(as.numeric(NUMWindReading))), digits = 3),
-              #,
-              #           NUMEventValidCompletionRate_RV = mean(NUMEventValidCompletionRate_RV)
-              #           NUMEventValidCompletionRate_RV = round(mean(as.numeric(BINValidEventAttempt)), digits = 3),
-              #            NUMInvitationParticipationRate_RV = round(mean(as.numeric(BINInvitationEventOrAthlete)), digits = 3),
-              #           NUMAthletesCompeteAway_RV = round(mean(as.numeric(BINAthleteCompeteAwayVenue)), digits = 3)
+              NUMAvgWindReading_RV = round(mean(!is.na(as.numeric(NUMWindReading))), digits = 3))
+  
+  ## Refine the dataset
+  venues <- wrk.03DataTrans_PlotMap %>%
+    dplyr::mutate(round.nbr = cut(as.numeric(ORDCompetitionRound),c(0,1,2,3,4,5,6,7,8,9,10,11),
+                                  labels = c('Round 01', 'Round 02', 'Round 03', 'Round 04', 'Round 05',
+                                             'Round 06', 'Round 08', 'Round 09', 'Round 10', 'Round 11', 'Round 12')))
+  
+  # Create groups to plot
+  venues.df <- split(venues, venues$round.nbr)
+  
+  #Define the leaflet object
+  l <- leaflet() %>% addTiles()
+  
+  
+  names(venues.df) %>%
+    purrr::walk( function(df) {
+      l <<- l %>%
+        addMarkers(data = venues.df[[df]],
+                   lng = ~NUMVenueLongitude, lat = ~NUMVenueLatitude,
+                   label = ~as.character(CATCompetitionVenue), 
+                   popup = ~as.character(CATCompetitionVenue),
+                   group = df,
+                   #clusterOptions = markerClusterOptions(removeOutsideVisibleBounds = F),
+                   labelOptions = labelOptions(noHide = F,
+                                               direction = 'auto'))
+    })
+  # Create UI control layer for the map plots
+  l %>%
+    addLayersControl(
+      overlayGroups = names(venues.df),
+      options = layersControlOptions(collapsed = FALSE)
     )
   
-  icons <- awesomeIcons(
-    icon = 'ios-close',
-    iconColor = 'black',
-    library = 'ion', #fa or glphicon
-    markerColor = getColor(wrk.03DataTrans_PlotMap)
-  )
-  
-  leaflet(data = wrk.03DataTrans_PlotMap) %>% 
-    addTiles() %>%
-    addMarkers(~NUMVenueLongitude, ~NUMVenueLatitude, popup = ~as.character(CATCompetitionVenue), label = ~as.character(CATCompetitionVenue))
-  
-
-
   
 # ======================================================================================================================== #
 # END OF PROGRAM #

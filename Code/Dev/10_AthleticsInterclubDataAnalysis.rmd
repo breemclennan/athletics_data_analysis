@@ -17,7 +17,9 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
 options(scipen = 10000) #prevent y axis from scaling
 library(dplyr)
 library(purrr)
@@ -33,6 +35,8 @@ library(knitr)    # For knitting document and include_graphics function
 library(ggplot2)  # For plotting
 library(png)      # For grabbing the dimensions of png files
 library(jpeg)
+library(DT)       # For rendering tables
+library(knitr)
 `%ni%` <- Negate(`%in%`)
 # Define a function that computes file paths relative to where root .git folder is located
 F <- is_git_root$make_fix_file() 
@@ -56,7 +60,7 @@ The purpose of this project is to uncover and document valued actionable insight
 
 The target audience includes coaches, personal trainers, athletes, ahletics governing body officials, interested members of the public, sports enthusiasts, sports statisticians and data scientists.
 
-The objective is to explore Victorian interclub athletic competition results data for the complete 2017-18 season and identify:
+The objective is to explore Victorian interclub track & field athletic competition results data for the complete 2017-18 summer season and identify:
 
   *	Natural groupings & patterns within the data
   *	Basic descriptive statistics across the entire dataset
@@ -72,7 +76,7 @@ The objective is to explore Victorian interclub athletic competition results dat
 
   1. What are the participation rates at interclub competitions?
     + Can we break this down by zones and clubs?
-    + Whats the distribution of total competitions athletes participate in during the season?
+    + What's the distribution of total competitions athletes participate in during the season?
       - How many events per competition do athletes partake in?
     + How many athletes participated in all rounds of competition?
     + How many athletes competed at "away" venues? (ignoring metro zone v zone)
@@ -85,26 +89,23 @@ The objective is to explore Victorian interclub athletic competition results dat
     + What's the "windiest" venue?
   6. Can we see how points are distributed for performances?
     + What other alternatives to point scoring are there?
-  7. Miscellaneous:
-    + Do athletes compete at more than one venue per round of competition?
-    + Do athletes compete multiple times in the same event in a round of competition?
-  
+
 
 ## Context specific process flow for this analysis
 
-  0. Define the parameters: Purpose, objective, and rough timelines
-  1. Obtain target audience input
-  2. Obtain source data [Athletics Victoria "AV Shield 2017-18"](http://athsvic.org.au/events/competitions/avcompetitions/av-shield/)
-  3. Conduct a risk assessment on source data with respect to purpose & objective
-    + Discarding any data which is not relevant to the analysis guiding questions
+  0. Define the parameters: Purpose, objective, and rough timelines.
+  1. Obtain target audience input.
+  2. Obtain source data [Athletics Victoria "AV Shield 2017-18"](http://athsvic.org.au/events/competitions/avcompetitions/av-shield/).
+  3. Conduct a risk assessment on source data with respect to purpose & objective.
+    + Discarding any data which is not relevant to the analysis guiding questions.
   4. Technical setup to commence analysis:
     + [Github repository](https://github.com/breemclennan/athletics_data_analysis)
-    + R Project file
+    + R Project file.
         - Load data >> Prepare data >> Merge reference data >> Transform data >> Analyse data
-  5. Explore data & key guiding questions to discover answers
-  6. Peer review & publish analysis and findings
-  7. Obtain audience feedback, review and apply updates where appropriate
-    + Opportunities to subsequent analysis
+  5. Explore data & key guiding questions to discover answers.
+  6. Peer review & publish analysis and findings.
+  7. Obtain audience feedback, review and apply updates where appropriate.
+    + Opportunities to subsequent analysis.
 
 
 ## Analysis data considerations
@@ -115,22 +116,23 @@ General description of the source data:
   
   * Round 7 is excluded because it was cancelled due to extreme weather.
   * There are 77 individual csv files for season 2017-18
-  * The CSV file contents can be described as: performance results for each athlete by event completed, for a round of competition for a               specific region. Season 2017-18.
-  * There are 21 variables in the source data, ranging from athlete registration ID, event specification, performance result, age group, club,         venue, wind reading and completion status
+  * The CSV file contents can be described as: performance results for each athlete by event completed, for a round of competition for a specific region. Season 2017-18.
+  * There are 21 variables in the source data, ranging from athlete registration ID, event specification, performance result, age group, club, venue, wind reading and completion status.
+  * Dates and times of competitions and events are not included with the source datasets.
   
 Technical approach to creating the analysis data:
 
-  * Append all CSVs together to create one source dataset
-  * Re-name and format variables for data type consistency
-  * Binarise variables where appropriate
-  * Create hierarchial groupings for event types, veues, and age groups
-  * Triage missing data (careful application of subject matter expertise)
-    + Particularly with AWD classification performance adjustments, venue names, event specifications and event status (DNQ, INV)
+  * Append all CSVs together to create one source dataset.
+  * Re-name and format variables for data type consistency.
+  * Binarise variables where appropriate.
+  * Create hierarchial groupings for event types, veues, and age groups.
+  * Triage missing data (careful application of subject matter expertise).
+    + Particularly with AWD classification performance adjustments, venue names, event specifications and event status (DNQ, INV).
   * Merging on reference data by created keys:
-    + Club details (shortname, full name, zone)
-    + Venue details (geographical location, track type)
-    + Performance adjustment (AWD & masters age group athletes)
-  * Calculate athlete finishing order per event and point scoring methods
+    + Club details (shortname, full name, zone).
+    + Venue details (geographical location, track type).
+    + Performance adjustment (AWD & masters age group athletes).
+  * Calculate athlete finishing order per event and point scoring methods.
 
 ## Sample of the created analysis dataset
 
@@ -138,6 +140,10 @@ Technical approach to creating the analysis data:
 # Dataset structure
 glimpse(tbl_df(wrk.03DataTrans_03))
 
+#n_distinct(wrk.03DataTrans_03$KEYKEYRegistrationNumber)
+```
+
+```{r sample, results='asis'}
 # Randomly sample 6 rows from the analysis dataset
 head(wrk.03DataTrans_03[sample(nrow(wrk.03DataTrans_03))])
 
@@ -147,7 +153,7 @@ head(wrk.03DataTrans_03[sample(nrow(wrk.03DataTrans_03))])
 
   1. What are the participation rates at interclub competitions?
     + Can we break this down by zones and clubs?
-    + Whats the distribution of total competitions athletes participate in during the season?
+    + What's the distribution of total competitions athletes participate in during the season?
       - How many events per competition do athletes partake in?
     + How many athletes participated in all rounds of competition?
     + How many athletes competed at "away" venues? (ignoring metro zone v zone)
@@ -167,8 +173,21 @@ barplot(rev(wrk.03DataTrans_Q1A$NUMAthletesParticipating),
         xlab = "Number of athletes",
         names.arg = rev(wrk.03DataTrans_Q1A$ORDCompetitionRound))
 
-wrk.03DataTrans_Q1A
+```
 
+  
+
+```{r wrk.03DataTrans_Q1A}
+datatable(wrk.03DataTrans_Q1A, class = "cell-border stripe", 
+          caption = 'Summary table for athletes participating in rounds of competition',
+          rowname = FALSE,
+          options = list(autoWidth = TRUE, searching = TRUE)
+          )
+```
+
+  
+
+```{r FreqTableCast}
 # Distribution of participation across rounds
  # Calculate participation by athlete
     FreqTable <-  as.data.table(xtabs(~ KEYRegistrationNumber + ORDCompetitionRound, wrk.03DataTrans_03))
@@ -177,11 +196,12 @@ wrk.03DataTrans_Q1A
       mutate(NUMTotalEventsPartipated = rowSums(FreqTableCast[, c(2:12)])) %>%
       mutate(NUMTotalRoundsParticipated = apply(FreqTableCast[, c(2:12)], 1, function(a) sum(a > 0)) )
 
-head(FreqTableCast_1)
+#head(FreqTableCast_1)
 
 FreqTableCast_2 <- FreqTableCast_1 %>%
   filter(KEYRegistrationNumber %ni% c("0")) #not including teams
-plot(FreqTableCast_2$NUMTotalRoundsParticipated, FreqTableCast_2$NUMTotalEventsPartipated )
+plot(FreqTableCast_2$NUMTotalRoundsParticipated, FreqTableCast_2$NUMTotalEventsPartipated, 
+    main = "Distribution of event participation across rounds of competition")
 
 # Athletes competing in all rounds of competition
 wrk.03DataTrans_Q1B <- wrk.03DataTrans_03 %>%
@@ -191,8 +211,13 @@ wrk.03DataTrans_Q1B <- wrk.03DataTrans_03 %>%
   filter(NUMAthletesRounds >= 11) %>%
   summarise(NUMTotalAthletesAllRounds = n(),
             NUMRounds = max(NUMAthletesRounds))
-            
-wrk.03DataTrans_Q1B
+       
+datatable(wrk.03DataTrans_Q1B, class = "cell-border stripe", 
+          caption = 'Summary of athletes competing in all rounds of competition',
+          rowname = FALSE,
+          options = list(autoWidth = TRUE, searching = FALSE, dom = 't')
+          )     
+
 
 # How many athletes competed at away venues?
 
@@ -200,64 +225,73 @@ wrk.03DataTrans_Q1C <- wrk.03DataTrans_03 %>%
   filter(KEYRegistrationNumber %ni% c("0") & BINAthleteCompeteAwayVenue == 1) %>% #remove teams
   group_by(BINAthleteCompeteAwayVenue) %>%
   summarise(NUMAthletesAway = n_distinct(KEYRegistrationNumber))
-           
-wrk.03DataTrans_Q1C
+       
+
+datatable(wrk.03DataTrans_Q1C, class = "cell-border stripe", 
+          caption = 'Summary of athletes who competed in away venues',
+          rowname = FALSE,
+          options = list(autoWidth = TRUE, searching = FALSE, dom = 't')
+          )       
+
 
 ```
+
 
   2. How many opportunities are there for each event type?
     + Can we see stats by event grouping?
     + What's the most poplar event?
+    
 
-```{r rows.print=12, echo=TRUE}
+```{r participation, rows.print=12, echo=TRUE}
 # Participation by event
 wrk.03DataTrans_Q2A <- wrk.03DataTrans_03 %>%
   group_by(ORDCompetitionRound, CATEventFullName) %>%
   summarise(NUMAthletesParticipating = n_distinct(KEYRegistrationNumber),
             NUMTotalEventsParticipated = n())
 
-wrk.03DataTrans_Q2A
+datatable(wrk.03DataTrans_Q2A, class = "cell-border stripe", 
+          caption = 'Participation by event type',
+          rowname = FALSE,
+          options = list(autoWidth = TRUE, searching = TRUE)
+          )    
 
-# The most popular events   TODO:FIX
-wrk.03DataTrans_Q2B <- wrk.03DataTrans_Q2A %>%
-  group_by(CATEventFullName) %>%
-  summarise(NUMTotalEventsParticipated = n()) %>%
-  arrange(desc(NUMTotalEventsParticipated))
-
-wrk.03DataTrans_Q2B
 ```
 
 
   3. How many incomplete events or invalid event attempts occurred?
 
 
-```{r}
+```{r incomplete}
 # incomplete events & invalid attempts
   wrk.03DataTrans_Q3A <- wrk.03DataTrans_03 %>%
     filter(BINValidEventAttempt == 0 & CATAthleteEventStatus %ni% c("OK"))  %>%
     group_by(CATEventFullName, CATAthleteEventStatus) %>%
     summarise(NUMEventStatus = n()) 
-wrk.03DataTrans_Q3A
+
+datatable(wrk.03DataTrans_Q3A, class = "cell-border stripe", 
+          caption = 'Events unsuccessfully completed',
+          rowname = FALSE,
+          options = list(autoWidth = TRUE, searching = TRUE)
+          ) 
+
 
 ```
 
 
   4. Is there any pattern to performances as the season progresses?
+  
 
-```{r}
+```{r patterns, echo=FALSE}
 # Lets take an event like 400m. Circular event, wind readings not required. Hypothesis: Good measure of speed endurance & fitness
 wrk.03DataTrans_Q4A <- wrk.03DataTrans_03 %>%
   filter(CATEventFullName == "400 Run") %>%
-  select(ORDCompetitionRound, CATEventFullName, NUMPerformance, CATGender) #CATAgeGroup)
-  #group_by(ORDCompetitionRound, CATEventFullName) %>%
-  #summarise(NUMAvgPerformance = mean(NUMPerformance))
+  select(ORDCompetitionRound, CATEventFullName, NUMPerformance, CATGender) 
 
-library(ggplot2)
 ggplot(wrk.03DataTrans_Q4A, aes(x = ORDCompetitionRound, y = NUMPerformance, fill = CATGender)) +
   geom_boxplot() +
    scale_fill_brewer(palette = "Spectral")
 
-head(wrk.03DataTrans_Q4A)
+#head(wrk.03DataTrans_Q4A)
 
 # Lets look at a power event like shot put
 wrk.03DataTrans_Q4B <- wrk.03DataTrans_03 %>%
@@ -273,7 +307,7 @@ ggplot(wrk.03DataTrans_Q4B, aes(x = ORDCompetitionRound, y = NUMPerformance, fil
   5. How many venues are involved throughout the season?
     + What's the "windiest" venue?
 
-```{r}
+```{r geography}
 
 # Setup data to create map plot
 wrk.03DataTrans_PlotMap <- wrk.03DataTrans_03 %>%
@@ -285,22 +319,72 @@ wrk.03DataTrans_PlotMap <- wrk.03DataTrans_03 %>%
     )
 
 # Create a map and plot all venues used during the season
-leaflet(data = wrk.03DataTrans_PlotMap) %>% 
-    addTiles() %>%
-    addMarkers(~NUMVenueLongitude, ~NUMVenueLatitude, popup = ~as.character(CATCompetitionVenue), label = ~as.character(CATCompetitionVenue))
+
+  # Seting up summary dataset for geographical plotting:
+  wrk.03DataTrans_PlotMap <- wrk.03DataTrans_03 %>%
+    filter(KEYRegistrationNumber %ni% c("0")) %>% #remove teams
+    group_by(ORDCompetitionRound, CATCompetitionVenue, NUMVenueLatitude, NUMVenueLongitude) %>%
+    summarise(NUMAthletes_RV = n_distinct(KEYRegistrationNumber),
+              NUMEventsParticipated_RV = n(),
+              NUMMaxWindReading_RV = round(max(as.numeric(NUMWindReading), na.rm = TRUE), digit = 3),
+              NUMMinWindReading_RV = round(min(as.numeric(NUMWindReading), na.rm = TRUE), digit = 3),
+              NUMAvgWindReading_RV = round(mean(!is.na(as.numeric(NUMWindReading))), digits = 3))
+  
+  ## Refine the dataset
+  venues <- wrk.03DataTrans_PlotMap %>%
+    dplyr::mutate(round.nbr = cut(as.numeric(ORDCompetitionRound),c(0,1,2,3,4,5,6,7,8,9,10,11),
+                                  labels = c('Round 01', 'Round 02', 'Round 03', 'Round 04', 'Round 05',
+                                             'Round 06', 'Round 08', 'Round 09', 'Round 10', 'Round 11', 'Round 12')))
+  
+  # Create groups to plot
+  venues.df <- split(venues, venues$round.nbr)
+  
+  #Define the leaflet object
+  l <- leaflet() %>% addTiles()
+  
+  
+  names(venues.df) %>%
+    purrr::walk( function(df) {
+      l <<- l %>%
+        addMarkers(data = venues.df[[df]],
+                   lng = ~NUMVenueLongitude, lat = ~NUMVenueLatitude,
+                   label = ~as.character(CATCompetitionVenue), 
+                   popup = ~as.character(CATCompetitionVenue),
+                   group = df,
+                   #clusterOptions = markerClusterOptions(removeOutsideVisibleBounds = F),
+                   labelOptions = labelOptions(noHide = F,
+                                               direction = 'auto'))
+    })
+  # Create UI control layer for the map plots
+  l %>%
+    addLayersControl(
+      overlayGroups = names(venues.df),
+      options = layersControlOptions(collapsed = FALSE)
+    )
+  
   
 
 # The windiest venue
-wrk.03DataTrans_PlotMap <- arrange(wrk.03DataTrans_PlotMap, desc(NUMAvgWindReading_RV))
-wrk.03DataTrans_PlotMap
+wrk.03DataTrans_PlotMap <- arrange(wrk.03DataTrans_PlotMap, desc(NUMMaxWindReading_RV)) %>%
+  select(ORDCompetitionRound, CATCompetitionVenue, NUMAvgWindReading_RV, NUMMaxWindReading_RV, NUMMinWindReading_RV,
+         -NUMVenueLatitude)
+
+datatable(wrk.03DataTrans_PlotMap, class = "cell-border stripe", 
+          caption = 'Windiest venues',
+          rowname = FALSE,
+          options = list(autoWidth = TRUE, searching = TRUE)
+          ) 
+
 ```
+
 
 
   6. Can we see how points are distributed for performances?
     + What other alternatives to point scoring are there?
     
     
-```{r}
+    
+```{r points_A}
 
 # Setup calculated fields
 wrk.03DataTrans_SUMM01A <- wrk.03DataTrans_03 %>%
@@ -356,15 +440,7 @@ wrk.03DataTrans_SUMM01A <- wrk.03DataTrans_03 %>%
 
 ```
 
-  7. Miscellaneous:
-    + Do athletes compete at more than one venue per round of competition?
-    + Do athletes compete multiple times in the same event in a round of competition?
 
-```{r}
-
-
-
-```
 
 ## Summary notes & future analyses
 TODO: add in lessons learned, traps for young players
