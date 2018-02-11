@@ -1,7 +1,7 @@
 ---
-title: "Athletics Interclub Results Data Analysis"
-author: Bree McLennan
-date: 01 February 2018
+title: "Data Analysis of Athletics Inter-club Results"
+author: "Bree McLennan (www.breemclennan.com)"
+date: "09 February 2018"
 output: 
   html_document:
     toc: true
@@ -11,13 +11,10 @@ output:
     highlight: haddock
     df_print: paged
     self_contained: yes
-    #fig_width: 7
-    #fig_height: 8
     fig_caption: true
 ---
 
-
-```{r setup, include=FALSE}
+```{r "setup", include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 knitr::opts_chunk$set(message = FALSE)
 knitr::opts_chunk$set(warning = FALSE)
@@ -27,21 +24,53 @@ library(dplyr)
 library(purrr)
 library(data.table)
 library(feather)
-library(DescTools)
-library(RDCOMClient)
 library(glue)
 library(rprojroot)
 library(leaflet)
 library(tidyr)
-library(knitr)    # For knitting document and include_graphics function
+library(knitr)    # For knitting document and include_graphics function. Required for wordpress publishing.
+                  # Knitr has another method of rendering tables (kable). 
 library(ggplot2)  # For plotting
 library(png)      # For grabbing the dimensions of png files
-library(jpeg)
+library(jpeg)     # For rendering jpg images
 library(DT)       # For rendering tables
-library(knitr)
-library(kableExtra)
-library(formattable)
-library(gridExtra)
+library(RCurl)    # Required for worpress publishing (RWordPress).
+library(devtools) # Required for wordpress publishing (RWordPress).
+library(XML)      # Required for wordpress publishing (RWordPress).
+library(kableExtra) # Extra functions for kable table formating
+library(formattable) # For table formatting
+library(gridExtra) # Extra plotting functions
+
+if (!require('RWordPress')) { #required for WordPress publishing
+  devtools::install_github(c("duncantl/XMLRPC", "duncantl/RWordPress"))
+}
+library(RWordPress)
+
+# ======== CODE PLACEHOLDER FOR DIRECT POSTING FROM R TO WORDPRESS ================== #
+# Tell RWordPress how to set the user name, password, and URL for your WordPress site.
+# options(WordpressLogin = c(user = 'password'),
+#        WordpressURL = 'https://breemclennan.com/xmlrpc.php') 
+#
+# OTHER KEY PARAMETERS TO SET IF PUBLISHING TO WP
+# turn off "self_contained = true"
+# consider installing and listing packages: "htmlwidgets", "widgetframe", "webshot"
+# Install phantomJS (external install, dependency for knit2html)
+# For all practical purposes this should always be FALSE 
+#knitr::opts_chunk$set(widgetframe_self_contained = FALSE) # default = FALSE
+# For all practical purposes this should always be TRUE 
+#knitr::opts_chunk$set(widgetframe_isolate_widgets = TRUE) # default = TRUE
+# This must be executed: Upload plots: set knitr options. It will generate png files and direct upload to WP media library
+#opts_knit$set(upload.fun = function(file){library(RWordPress);uploadFile(file)$url;})
+# Include toc (comment out if not needed), in this document we are using one.
+#library(markdown)
+#options(markdown.HTML.options = c(markdownHTMLOptions(default = T),"toc"))
+#
+# HOW TO SAVE HTML WIDGETS (DT & leaflet)
+# place function call at end of code chunk: EG -
+# #htmlwidgets::saveWidget(frameableWidget(wrk.03DataTrans_Q2A),'ParticipationByEventTable')
+# 
+# =================================================================================== #
+
 `%ni%` <- Negate(`%in%`)
 # Define a function that computes file paths relative to where root .git folder is located
 F <- is_git_root$make_fix_file() 
@@ -53,7 +82,8 @@ wrk.03DataTrans_03 <- setDT(read_feather(glue(F("Data/Processed/wrk.03DataTrans_
 image01_path <- F("Docs/DataReport/Hurdles1.jpg")
 ```
 
-```{r image01, echo=FALSE, out.width = "75%"}
+```{r "CoverImage", echo=FALSE, out.width = "75%"}
+# Render cover picture
 include_graphics(image01_path)
 ```
 
@@ -62,23 +92,23 @@ include_graphics(image01_path)
 
 The purpose of this project is to uncover and document valued actionable insights which are contained within the available source data for the benefit of the target audience.
 
-The target audience includes coaches, personal trainers, athletes, ahletics governing body officials, interested members of the public, sports enthusiasts, sports statisticians and data scientists.
+The target audience includes coaches, personal trainers, athletes, athletics governing body officials, interested members of the public, sports enthusiasts, sports statisticians and data scientists.
 
-The objective is to explore Victorian interclub track & field athletic competition results data for the complete 2017-18 summer season and identify:
+The objective is to explore Victorian inter-club track & field athletic competition results data for the complete 2017-18 summer season and identify:
 
   *	Natural groupings & patterns within the data
-  *	Basic descriptive statistics across the entire dataset
+  *	Basic descriptive statistics across the entire data-set
     +	How many competitions per athlete
     +	How many events per athlete
     +	Min, max, averages and quartiles for each event
     +	Geography statistics: By whole of Victorian state and by competition zone/region
   *	Further opportunities for athletics data analysis
 
-**Important note:** This analysis is a not-for-profit independent analysis conducted by Bree McLennan, using publically available data from the [Athletics Victoria Website](http://athsvic.org.au/calendar-results/). This analysis does not represent the opinions of Athletics Victoria.
+**Important note:** This analysis is a not-for-profit independent analysis conducted by Bree McLennan, using publicly available data from the [Athletics Victoria Website](http://athsvic.org.au/calendar-results/). This analysis does not represent the opinions of Athletics Victoria.
 
 ## Key questions from the target audience to guide this analysis
 
-  1. What are the participation rates at interclub competitions?
+  1. What are the participation rates at inter-club competitions?
     + Can we break this down by zones and clubs?
     + What's the distribution of total competitions athletes participate in during the season?
       - How many events per competition do athletes partake in?
@@ -114,7 +144,7 @@ The objective is to explore Victorian interclub track & field athletic competiti
 
 ## Analysis data considerations
 
-The data for interclub rounds 1 to 12 is contained in individual csv files, by round, for each participating Victorian region.
+The data for inter-club rounds 1 to 12 is contained in individual csv files, by round, for each participating Victorian region.
 
 General description of the source data:
   
@@ -122,25 +152,25 @@ General description of the source data:
   * There are 77 individual csv files for season 2017-18
   * The CSV file contents can be described as: performance results for each athlete by event completed, for a round of competition for a specific region. Season 2017-18.
   * There are 21 variables in the source data, ranging from athlete registration ID, event specification, performance result, age group, club, venue, wind reading and completion status.
-  * Dates and times of competitions and events are not included with the source datasets.
+  * Dates and times of competitions and events are not included with the source data-sets.
   
 Technical approach to creating the analysis data:
 
-  * Append all CSVs together to create one source dataset.
+  * Append all CSVs together to create one source data-set.
   * Re-name and format variables for data type consistency.
   * Binarise variables where appropriate.
-  * Create hierarchial groupings for event types, veues, and age groups.
+  * Create hierarchical groupings for event types, venues, and age groups.
   * Triage missing data (careful application of subject matter expertise).
     + Particularly with AWD classification performance adjustments, venue names, event specifications and event status (DNQ, INV).
   * Merging on reference data by created keys:
-    + Club details (shortname, full name, zone).
+    + Club details (short-name, full name, zone).
     + Venue details (geographical location, track type).
     + Performance adjustment (AWD & masters age group athletes).
   * Calculate athlete finishing order per event and point scoring methods.
 
 ## Structure of the created analysis dataset
   
-  We commenced with 21 variables in the source dataset. After performing some high level checks on the data we disovered opportunities to
+  We commenced with 21 variables in the source data-set. After performing some high level checks on the data we discovered opportunities to
   create new variables (features) by applying context/subject matter expertise and joining relevant reference tables to the source data.
   
   All variables have been renamed to use a three-letter acronym prefix to denote the expected general data type values.
@@ -155,7 +185,7 @@ Technical approach to creating the analysis data:
   * **DTM:** Date-time values. Specifically formatted as YYY-MM-DD HH:MM:SS.ss
 <br><br>
 
-```{r wrk.03DataTrans_03, echo=TRUE}
+```{r "AnalysisDataStructure", echo=TRUE}
 # Analysis dataset structure
 glimpse(tbl_df(wrk.03DataTrans_03))
 
@@ -164,9 +194,9 @@ n_distinct(wrk.03DataTrans_03$KEYRegistrationNumber)
 ```
 <br>
 
-  A random sampling of records from the analysis dataset to demonstrate the visual of what we are working with: 
+  A random sampling of records from the analysis data-set to demonstrate the visual of what we are working with: 
 <br><br>
-```{r sample, results='asis'}
+```{r "AnalysisDataSample", results='asis'}
 # Randomly sample 6 rows from the analysis dataset
 head(wrk.03DataTrans_03[sample(nrow(wrk.03DataTrans_03))])
 
@@ -184,7 +214,9 @@ head(wrk.03DataTrans_03[sample(nrow(wrk.03DataTrans_03))])
   * How many athletes competed at "away" venues? (ignoring metro zone v zone)
     
 <br><br>
-```{r rows.print=12, echo=TRUE, out.height = "85%"}
+Let's begin by setting up a meaningful summary data-set to enable us to visualise the data.
+<br>
+```{r "ParticipationRates",rows.print=12, echo=TRUE, out.height = "85%"}
 
 # Calculate the participation rates for each round
 wrk.03DataTrans_Q1A <- wrk.03DataTrans_03 %>%
@@ -196,7 +228,7 @@ wrk.03DataTrans_Q1A <- wrk.03DataTrans_03 %>%
 
 # Visualise the dataset
 ggplot(wrk.03DataTrans_Q1A, aes(x = ORDCompetitionRound, y = NUMAthletesParticipating )) + 
-  geom_bar(stat = "identity", fill ='lightblue') +
+  geom_bar(stat = "identity", fill = 'lightblue') +
   geom_text(aes(label = NUMAthletesParticipating), vjust = 1.6, color = "white",
              size = 3.5) +
   labs(title = "Athlete participation by round",
@@ -209,8 +241,9 @@ ggplot(wrk.03DataTrans_Q1A, aes(x = ORDCompetitionRound, y = NUMAthletesParticip
 <br>
 
 <br><br>
-```{r wrk.03DataTrans_Q1A}
+```{r "ParticipationRatesTable"}
 
+# Render multi cell spec kable table with styling
 wrk.03DataTrans_Q1A <- wrk.03DataTrans_Q1A %>%
   mutate(NUMAthletesParticipating = color_bar("lightblue")(NUMAthletesParticipating)) %>%
     mutate_at(vars(contains('NUMTotalEvents')), function(x){
@@ -223,19 +256,19 @@ wrk.03DataTrans_Q1A <- wrk.03DataTrans_Q1A %>%
 wrk.03DataTrans_Q1A
 
 ```
-We can see from this summary table there is a steady volume of athletes participating in round 1,3 and 4, matched with steady volumes in events participated. There is a clear deviation at round 10, with a drop off in athlete volumes.
+We can see from this summary table and the bar plot that there is a steady volume of athletes participating in round 1,3 and 4, matched with steady volumes in events participated. There is a clear deviation at round 10, with a drop off in athlete volumes.
 
 Curious questions arise, what could be some potential causal factors for this pattern? Could it be time of year, event schedule/program, or something else?
 
 We know that:
 
-* Rounds 1 to 5 are generally early October to mid November, held in mid-late afternoon
-* Rounds 6 to 8 are immediately before the end of year holiday season
-* Rounds 9 to 12 are generally in January, held as twilight meets
+* Rounds 1 to 5 are generally early October to mid November, held in mid-late afternoon.
+* Rounds 6 to 8 are immediately before the end of year holiday season.
+* Rounds 9 to 12 are generally in January, held as twilight meets.
 
 <br> 
 Let's now take a look at the distribution of event participation across rounds.
-```{r FreqTableCast}
+```{r "FreqTableCast"}
 # Distribution of participation across rounds
 # Calculate participation by athlete
     FreqTable <-  as.data.table(xtabs(~ KEYRegistrationNumber + ORDCompetitionRound, wrk.03DataTrans_03))
@@ -250,7 +283,7 @@ FreqTableCast_2 <- FreqTableCast_1 %>%
 ```
 <br><br> 
 
-```{r FreqDistribution}
+```{r "FreqDistribution"}
 # Visualise: Plot the data points
 ggplot(FreqTableCast_2, aes(x = NUMTotalRoundsParticipated, y = NUMTotalEventsPartipated)) + 
   geom_point() +
@@ -258,7 +291,7 @@ ggplot(FreqTableCast_2, aes(x = NUMTotalRoundsParticipated, y = NUMTotalEventsPa
             x = "Cumulative number of rounds participated",
             y = "Cumulative count of event participation") +
   scale_x_continuous(breaks = c(1,2,3,4,5,6,7,8,9,10,11), label = c("1", "2", "3","4","5","6","8","9","10","11","12")) +
-  scale_y_continuous(breaks = c(0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75)) +
+  scale_y_continuous(breaks = seq(0, 75, 5), sec.axis = dup_axis()) +
   stat_summary(fun.y = mean, fun.ymin = min, fun.ymax = max, colour = "blue") +
   geom_smooth(aes(colour = "loess"), method = "loess", se = FALSE) 
 ```
@@ -267,13 +300,13 @@ This cumulative distribution reveals:
 
 * The average athlete in the population is likely to participate in at least 2 events per round of competition
 * The fitted regression line shows a slightly more positive slope change at round 8. 
-* Potential emergence of sub groups
+* Potential emergence of sub groups:
   + Athletes who participate in a single event per round (below average): Could these be niche/specialist event athletes?
   + Average population (the red regression line), participating in two events per round.
   + "Decathletes" (the outliers, above average), athletes who seek to have a go at every event on the program, every round.
 
 <br><br> 
-```{r CompetingAllRounds}
+```{r "CompetingAllRounds"}
 # Athletes competing in all rounds of competition
 wrk.03DataTrans_Q1B <- wrk.03DataTrans_03 %>%
   filter(KEYRegistrationNumber %ni% c("0")) %>% #remove teams
@@ -290,14 +323,14 @@ wrk.03DataTrans_Q1B <- wrk.03DataTrans_Q1B %>%
 wrk.03DataTrans_Q1B
 
 ```
-This table highlights, out of nearly 3000 athletes who have competed in the summer interclub season, only 72 participated in all available rounds of competition. That is less than 5% of the athlete population.
+This table highlights, out of nearly 3000 athletes who have competed in the summer inter-club season, only 72 participated in all available rounds of competition. That is less than 5% of the athlete population.
 
 A large proportion of athletes participated in up to 4 rounds of competition.
 
 Curious question at this point: What would be the "optimum" number of rounds for an athlete to participate in?
 
 <br><br> 
-```{r AwayVenues}
+```{r "AwayVenues"}
 # How many athletes competed at away venues?
 wrk.03DataTrans_Q1C <- wrk.03DataTrans_03 %>%
   filter(KEYRegistrationNumber %ni% c("0") & BINAthleteCompeteAwayVenue == 1) %>% #remove teams
@@ -309,9 +342,35 @@ kable(wrk.03DataTrans_Q1C, "html", align = "l", caption = "Summary of athletes w
   kableExtra::kable_styling("hover", full_width = FALSE, position = "left")
 
 ```
-This table informs us, nearly 80% of the athlete population competed at a venue which was outside their registered club's Victorian district. At such a broad level view, we don't see the breakdown of clubs. Subject matter expertise suggests that the remaining 20% are likely Victorian country region athletes that don't travel to venues outside their district to compete, while the 80% is likely to be metropolitan.
-
+This table informs us, nearly 80% of the athlete population competed at a venue which was outside their registered club's Victorian district. At such a broad level view, we don't see the breakdown of clubs. Subject matter expertise suggests that the remaining 20% are likely Victorian country region athletes that don't travel to venues outside their district to compete, while the 80% is likely to be metropolitan with zone versus zone rounds held at different venues each round.
 <br><br>  
+
+Let's take a look at the participation by venue and Victorian region:
+<br> 
+```{r "VenueParticipation"}
+
+# What's the breakdown of participation by region? This will include "visiting athletes"
+wrk.03DataTrans_Q1D <- wrk.03DataTrans_03 %>%
+  filter(KEYRegistrationNumber %ni% c("0")) %>% #remove teams
+  group_by(CATCompetitionVenue, CATVenueZone) %>%
+  summarise(NUMAthltesParticipated = n_distinct(KEYRegistrationNumber)) %>%
+  arrange(desc(NUMAthltesParticipated))
+ 
+wrk.03DataTrans_Q1DD <- wrk.03DataTrans_Q1D %>%
+  #mutate(NUMAthltesParticipated = color_bar("lightblue")(NUMAthltesParticipated)) %>%
+  kable("html", escape = FALSE, align = "l", caption = "Summary of venues and total distinct athlete participation") %>%        kableExtra::kable_styling("hover", full_width = FALSE, position = "left") 
+
+wrk.03DataTrans_Q1DD
+
+```
+<br><br>
+This table is rolling up rounds into the total calculation. Venues which have hosted multiple rounds of competition will have increased chances of having higher numbers of distinct individual athletes.
+
+It is still curious to note, the metropolitan venues dominate the participation by venue. We see country region venues toward the lower half of the list. 
+
+The venues of Clifton Hill, Mentone and Box Hill have distinctly lower numbers, and this is likely due to half-completed rounds of competition.
+
+<br><br>
 
 **2. How many opportunities are there for each event type?**
 
@@ -319,7 +378,8 @@ This table informs us, nearly 80% of the athlete population competed at a venue 
   + What's the most poplar event?
     
 <br>  
-```{r participation, rows.print=12, echo=FALSE}
+```{r "ParticipationByEvent", rows.print=12, echo=FALSE}
+
 # Participation by event
 wrk.03DataTrans_Q2A <- wrk.03DataTrans_03 %>%
   group_by(ORDCompetitionRound, CATEventFullName, CATEventDiscipline) %>%
@@ -329,7 +389,9 @@ wrk.03DataTrans_Q2A <- wrk.03DataTrans_03 %>%
   arrange(desc(NUMAthletesParticipating))
 ```
 
-```{r TableParticipation, rows.print=12, echo=FALSE}
+```{r "TableParticipation", rows.print=12, echo=FALSE}
+
+# Render DT datatable
 datatable(wrk.03DataTrans_Q2A, class = "cell-border stripe", caption = 'Participation by event type',
           rowname = FALSE, options = list(autoWidth = TRUE, searching = TRUE))    
 
@@ -342,11 +404,12 @@ wrk.03DataTrans_Q2B <- wrk.03DataTrans_Q2A %>%
   head(n = 10)
 ```
 <br><br>
-This table displays the details of event participation by round. Sorted by the highest number of athletes participating, the track sprint events 100m and 200m come out on top.
+This table displays the details of event participation by round. Sorted by the highest number of athletes participating, the track sprint events 100m and 200m come out on top. The track run events, in particular the 100m and 3000/5000m are held very frequently and often by invitation when not officially scheduled for a round of competition.
 
 Let's now take a look at the most popular events for the whole season.
 <br><br>
-```{r VisualParticipation, rows.print=12, echo=FALSE}
+```{r "VisualParticipation", rows.print=12, echo=FALSE}
+
 # Visualise the dataset
 ggplot(wrk.03DataTrans_Q2B, aes(x = reorder(CATEventFullName, -NUMTotalParticipation), y = NUMTotalParticipation )) + 
   geom_bar(stat = "identity", fill = 'lightblue') +
@@ -359,8 +422,8 @@ ggplot(wrk.03DataTrans_Q2B, aes(x = reorder(CATEventFullName, -NUMTotalParticipa
 <br><br>
 This graph shows us quite clearly the sprint, middle distance and horizontal jumps events dominate in participation rates. It's interesting to note:
 
-* The 800m has higher participation than 400m 
-* Shot Put doesn't make it into the top 10
+* The 800m has higher participation than 400m.
+* Shot Put doesn't make it into the top 10.
 * Highly technical events such as hurdles, steeple, walks and pole vault are not in the top 10.
 <br><br>
 
@@ -368,17 +431,19 @@ This graph shows us quite clearly the sprint, middle distance and horizontal jum
 **3. How many incomplete events or invalid event attempts occurred?**
 
 <br><br>  
-```{r incomplete, echo=FALSE}
+```{r "IncompleteEvents", echo=FALSE}
 # incomplete events & invalid attempts
   wrk.03DataTrans_Q3A <- wrk.03DataTrans_03 %>%
     filter(BINValidEventAttempt == 0 & CATAthleteEventStatus %ni% c("OK"))  %>%
     group_by(CATEventFullName, CATAthleteEventStatus) %>%
     summarise(NUMEventStatus = n()) %>%
-    arrange(desc(NUMEventStatus))
+    mutate(NUMTotalEventStatus =  sum(NUMEventStatus)) %>%
+    arrange(desc(NUMTotalEventStatus))
 ```
 
-```{r TableIncomplete, echo=FALSE}
+```{r "TableIncomplete", echo=FALSE}
 
+# Render DT datatable
 datatable(wrk.03DataTrans_Q3A, class = "cell-border stripe", caption = 'Events unsuccessfully completed', rowname = FALSE, options = list(autoWidth = TRUE, searching = TRUE)) 
 
 ```
@@ -388,32 +453,39 @@ An event status can be:
 
 * DNF - Did not finish
 * DQ - Disqualified (IAAF rule breach)
-* NT - No throw recorded
+* NT - No time recorded
 * NM - No measurement made
 * DNS - Did not start
 
-The events with the highest incompletion rates are 800m, 400m and 200m. Incomletion could be due to injury or fatigue.
+The events with the highest non-completion rates are 200m, 800m and 400m. Non-Completion could be due to injury or fatigue.
 
 Let's visualise this and observe the events with status stacked.
 <br><br> 
-```{r VisualIncomplete, echo=FALSE}
+```{r "VisualIncomplete", echo=FALSE}
 # Visualise the dataset
 wrk.03DataTrans_Q3B <- wrk.03DataTrans_Q3A %>%
-  arrange(desc(NUMEventStatus)) %>%
-  head(n = 10)
+  ungroup() %>%
+  arrange(CATEventFullName, desc(NUMEventStatus), desc(NUMTotalEventStatus)) %>%
+  filter(CATEventFullName %in% c("200 Run","800 Run","400 Run","High Jump","Pole Vault","Triple Jump","Long Jump","Discus 1kg","100 Run","1500 Run")) #manually selecting top 10 events from our summary table, data groupings are tricky here.
 
-ggplot(wrk.03DataTrans_Q3B, aes(x = reorder(CATEventFullName, -NUMEventStatus), y = NUMEventStatus, fill = CATAthleteEventStatus )) + 
+# Plot the graph
+ggplot(wrk.03DataTrans_Q3B, aes(x = reorder(CATEventFullName, -NUMTotalEventStatus), y = NUMEventStatus, fill = CATAthleteEventStatus )) + 
   geom_bar(stat = "identity") +
+  geom_text(aes(label = NUMEventStatus), position = position_stack(vjust = 0.5)) +
   labs(title = "Incomplete Events & Unsuccesful Attempts: Top 10",
             x = "Event specification",
             y = "Total status count") +
-  scale_fill_brewer(palette = "Paired")
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_y_continuous(breaks = seq(0, 120, 10), sec.axis = dup_axis()) + # Ticks from 0 to 120, every 10
+  scale_fill_brewer(palette = "Paired") 
 
 ```
 <br><br>  
-The visual is consistent with the table above, however we can see some groupings emerge in the field events. 
+The visual is consistent with the table above. We can begin to see some groupings emerge in the field events. 
 
 For field events, is it more appropriate to use "DNF" or "NM" to signify the athlete commenced the event but recorded no final result? Is this a data integrity/consistency of entry issue?
+
+Equally, it is a little concerning to observe the status of "NT" on track events, assuming this is "No time", under what conditions were no times recorded for these events? Technical equipment malfunction? Or is this a data recording issue?
 <br><br>  
 
 **4. Is there any pattern to performances as the season progresses?**
@@ -421,29 +493,32 @@ For field events, is it more appropriate to use "DNF" or "NM" to signify the ath
 We can tackle this question by selecting three events, one from each general track & field discipline:
 
 * Run: We'll select 400m sprint. No wind readings are required, its a circular event, good measure of speed endurance.
-* Jump: We'll select Long Jump. It made it into the top 10 events for popularity by participation.
+* Jump: We'll select Long Jump. It made it into the top 10 events for popularity by participation. This will be impacted by wind conditions.
 * Throw: We'll select Shot Put. Might prove to be a good measure of power & strength.
 
 Let's observe how the performances of these events vary throughout the season.
   
 <br><br>  
-```{r patterns, echo=FALSE}
+```{r "PerformancePatterns", echo=FALSE}
 # Lets take an event like 400m. Circular event, wind readings not required. Hypothesis: Good measure of speed endurance & fitness
 wrk.03DataTrans_Q4A <- wrk.03DataTrans_03 %>%
-  filter(CATEventFullName == "400 Run") %>%
+  filter(CATEventFullName == "400 Run" & NUMPerformance >0) %>%
   select(ORDCompetitionRound, CATEventFullName, NUMPerformance, CATGender) 
 
+# Let's look at 400m
 ggplot(wrk.03DataTrans_Q4A, aes(x = ORDCompetitionRound, y = NUMPerformance, fill = CATGender)) +
   geom_boxplot() +
    scale_fill_brewer(palette = "Blues") +
     labs(title = "RUN: 400m performances by round",
             x = "Competition round",
-            y = "Performance in seconds") 
+            y = "Performance in seconds") +
+  scale_y_continuous(breaks = seq(40, 155, 5), sec.axis = dup_axis()) # Ticks from 40-155, every 10
+
      
 
 # Lets look at long jump
 wrk.03DataTrans_Q4B <- wrk.03DataTrans_03 %>%
-  filter(CATEventDiscipline == "Long Jump") %>%
+  filter(CATEventDiscipline == "Long Jump" & NUMPerformance >0) %>%
   select(ORDCompetitionRound, CATEventFullName, CATEventDiscipline, NUMPerformance, CATGender) 
 
 ggplot(wrk.03DataTrans_Q4B, aes(x = ORDCompetitionRound, y = NUMPerformance, fill = CATGender)) +
@@ -451,11 +526,13 @@ ggplot(wrk.03DataTrans_Q4B, aes(x = ORDCompetitionRound, y = NUMPerformance, fil
    scale_fill_brewer(palette = "Blues") +
    labs(title = "JUMP: Long Jump performances by round",
             x = "Competition round",
-            y = "Performance in metres") 
+            y = "Performance in metres") +
+  scale_y_continuous(breaks = seq(1.5, 8.0, 0.5), sec.axis = dup_axis()) # Ticks from 1.5 to 8.0, every 0.5
+
 
 # Lets look at a power event like shot put
 wrk.03DataTrans_Q4B <- wrk.03DataTrans_03 %>%
-  filter(CATEventDiscipline == "Shot Put") %>%
+  filter(CATEventDiscipline == "Shot Put" & NUMPerformance >0) %>%
   select(ORDCompetitionRound, CATEventFullName, CATEventDiscipline, NUMPerformance, CATGender) 
 
 ggplot(wrk.03DataTrans_Q4B, aes(x = ORDCompetitionRound, y = NUMPerformance, fill = CATGender)) +
@@ -463,35 +540,28 @@ ggplot(wrk.03DataTrans_Q4B, aes(x = ORDCompetitionRound, y = NUMPerformance, fil
    scale_fill_brewer(palette = "Blues") +
    labs(title = "THROW: Shot Put performances by round",
             x = "Competition round",
-            y = "Performance in metres") 
+            y = "Performance in metres") +
+  scale_y_continuous(breaks = seq(1.0, 20.0, 1), sec.axis = dup_axis()) # Ticks from 1.5 to 8.0, every 0.5
 
 
 ```
 <br><br>  
 A performance trend across the season looks to be a little cloudy and weak. However we do notice for both men and women:
 
-* A larger number of outliers in the 400m, with slower times than average
-* The outliers in shotput are all above the mean, throwing better than average
-* Most of the outliers in Long Jump are below the mean, jumping less than average
+* A larger number of outliers in the 400m, with slower times than average.
+* The outliers in shot put are all above the mean, throwing better than average.
+* Most of the outliers in Long Jump are below the mean, jumping less than average.
 
 <br><br>  
 **5. How many venues are involved throughout the season?**
 
   + What's the "windiest" venue?
-  
-The interactive geographical plot below illustrates the venues hosting competitions throughout the season, by round.
-The Victorian country region venues do not change round to round, and we notice the Melbourne etropolitan venues change each round.
-<br><br>  
-```{r geography}
+<br>
 
-# Setup data to create map plot
-wrk.03DataTrans_PlotMap <- wrk.03DataTrans_03 %>%
-    filter(KEYRegistrationNumber %ni% c("0")) %>% #remove teams
-    group_by(ORDCompetitionRound, CATCompetitionVenue, NUMVenueLatitude, NUMVenueLongitude) %>%
-    summarise(NUMAthletes_RV = n_distinct(KEYRegistrationNumber),
-              NUMEventsParticipated_RV = n(),
-              NUMAvgWindReading_RV = round(mean(!is.na(as.numeric(NUMWindReading))), digits = 3)
-    )
+The interactive geographical plot below illustrates the venues hosting competitions throughout the season, by round.
+The Victorian country region venues do not change round to round, and we notice the Melbourne metropolitan venues change each round.
+<br><br>  
+```{r "VenueGeography"}
 
 # Create a map and plot all venues used during the season
 
@@ -515,7 +585,7 @@ wrk.03DataTrans_PlotMap <- wrk.03DataTrans_03 %>%
   venues.df <- split(venues, venues$round.nbr)
   
   #Define the leaflet object
-  l <- leaflet() %>% addTiles()
+  l <- leaflet() %>% addTiles() # %>% addProviderTiles(providers$OpenStreetMap) # << Add this for WP publishing
   
   
   names(venues.df) %>%
@@ -537,45 +607,103 @@ wrk.03DataTrans_PlotMap <- wrk.03DataTrans_03 %>%
       options = layersControlOptions(collapsed = FALSE)
     )
   
+  #IF rendering to wordpress, consider adding a direct call to htmlwidgets, save widget as individual html file
+  # htmlwidgets::saveWidget(frameableWidget(l),'leaflet.html')##using widgetframe to create html widgets instance, with iframe instance inside, make it responsive!
+  
 ```  
 <br><br>  
 
 Let's look at the venues by wind reading. We'll use the max and min functions across wind reading by venue and round, this is because we know that events which require wind readings can run in multiple directions on competition day.
 
-* Negative wind readings are head wind
-* Positive wind readings are tail wind
+* Negative wind readings are head wind.
+* Positive wind readings are tail wind.
 * Positive wind readings above +2.0 M/sec are considered "illegal" when attempting to break records or achieve qualification standards.
 * Just because there is a wind reading does not mean it remained at that speed for the entire competition, but it may serve as an interesting indicator when it shows up at a consistent rate.
 
 <br><br>  
-```{r windreadings}
+```{r "VenueWindReadings"}
 # The windiest venue
 wrk.03DataTrans_PlotMap <- wrk.03DataTrans_PlotMap %>%
   ungroup() %>%
   select(ORDCompetitionRound, CATCompetitionVenue, NUMMaxWindReading_RV, NUMMinWindReading_RV) %>%
   arrange(desc(NUMMaxWindReading_RV)) 
 
+# Render DT datatable
 datatable(wrk.03DataTrans_PlotMap, class = "cell-border stripe", caption = 'Windiest venues',
           rowname = FALSE,options = list(autoWidth = TRUE, searching = TRUE)) 
 
 ```
 <br><br>  
 The table indicates to us Geelong, Bendigo and Werribee have recorded some of the highest wind readings across the state,
-significantly above +2.0 m/s. These may be strong winds, and with curiosity, does this impact performances in any significant way?
+significantly above +2.0 m/s. These are strong wind gusts, and with curiosity, does this impact performances in any significant way?
 <br><br> 
 
 **6. Can we see how points are distributed for performances?**
 
   + What other alternatives to point scoring are there?
   
+<br>   
 This might prove to be a hot topic to cover. The method in which points are calculated can be the difference between a team qualifying for shield final or an athlete receiving an award at the end of season.
 
 This section is dedicated to offering independent thought on alternative options to point scoring, while showing the differences to the current state.
 
-TODO-------EXPLAIN THE METHODS OF CALCULATION
-    
+**Methods of point scoring calculation**
+
+<br>  
+**Method #1** 
+AV Shield 2017-18: Points awarded based on performance within 80% of decathlon world record (method in use for inter-club round only).
+
+* **Pros:** 
+  * Pure performance based versus the world record
+  * No discrimination over finishing order, round or venue.
+
+* **Cons:**
+  * Severely penalises athletes who are well below the "norm" or outside the 80% threshold.
+  * Athletes below the threshold receive zero (0) points. 
+  * Penalty is not a good look for "rewarding" general participation regardless of ability. 
+  * Time cost of recalculation: For regions which desire to use a different method on the basis of fairness for **all** athletes, alternative and manual re-calculation of points is required. 
+  * The threshold needs to be reviewed regularly or when new records are set.
+
+**Method #2** 
+Points awarded 1st place = 11 points, 2nd-9th = 11 minus placing, 10th and above = 1 point. Grouping based on Round, Venue, Event,  Age Group, Finishing Order.
+
+* **Pros:**
+  * Rewards all participation and race/event-flight-based competitive finishing order. 
+  * Encourages balanced seeding of events to promote challenging competition
+
+* **Cons:**
+  * Will be biased toward smaller competition regions
+  * Method is not purely performance based. 
+
+**Method #3**
+Points awarded 1st place = 11 points, 2nd-9th = 11 minus placing, 10th and above = 1 point. Grouping based on Round, Event, Age Group, Finishing Order. 
+
+Alteration: Similar to method 2, but grouping next level up, finishing order based on Round/Event results and not Venue/Event.
+
+* **Pros:**
+  * Finishing order calculated versus other athletes competing in same event, at same round. 
+  * Expands the number of athletes in calculation group.
+  * Encourages balanced seeding of events to promote challenging competition
+
+* **Cons:**
+  * For increased balance and fairness, same events should be held on the same round and not staggered/fragmented each round because of venue resources.
+  * Method is not purely performance based. 
+  * The overall percentages of participation for athletes with disability is less than 5% of the athlete population. The impacts will not be greatly observed, but will be subtle enough to see some minor differences in total points awarded (final finishing orders) over the season.
+
+**Method #4**
+Normalising performances by athletes with disability, using respective adjustment table for AWD classification. Points awarded 1st place = 11 points, 2nd-9th = 11 minus placing, 10th and above = 1 point. Grouping based on Round, Venue, Event,  Age Group, Finishing Order using the normalised performance result.
+
+* **Pros:**
+  * Using the same grouping method as Method 3, but with performance normalisation. 
+  * Offers equity in points awarded, by recognising input effort
+  * Encourages balanced seeding of events to promote challenging competition
+
+* **Cons:**
+  * For increased balance and fairness, same events should be held on the same round and not staggered/fragmented each round because of venue resources.
+  * Method is not purely performance based.
+
 <br><br>     
-```{r points_A}
+```{r "PointScoring"}
 
 # Setup calculated fields
 wrk.03DataTrans_SUMM01A <- wrk.03DataTrans_03 %>%
@@ -587,77 +715,147 @@ wrk.03DataTrans_SUMM01A <- wrk.03DataTrans_03 %>%
             NUMTotalRoundPoints11AWDAdj = sum(NUMRoundEventFinishOrderPoints11AWDAdj, na.rm = TRUE)) %>%
   arrange(desc(NUMTotalPoints11))
 
-  # GRAPH 1:
-  wrk.03DataTrans_SUMM01AA <- head(wrk.03DataTrans_SUMM01A, n = 10)
-  ggplot(wrk.03DataTrans_SUMM01AA, aes(x = reorder(KEYRegistrationNumber, -NUMTotalPoints11) , y = NUMTotalPoints11 )) +
-  geom_text(aes(label = NUMTotalPoints11), vjust = 1.6, color = "white", size = 3.5) +
-  geom_bar(stat = "identity", fill = 'lightblue') +
-   labs(title = "AV Shield 2017-18: Points awarded [1st=11]",
-            x = "Athlete registration ID",
-            y = "Total Points Awarded [11]") 
-  
-    # Horizontal Barplot [Method Decathlon WR, AV]:
-    wrk.03DataTrans_SUMM01B <- wrk.03DataTrans_SUMM01A %>%
-      arrange(desc(NUMTotalAVPointsAwarded)) %>%
-      head(n =10)
-   # GRAPH 2 
-  ggplot(wrk.03DataTrans_SUMM01B, aes(x = reorder(KEYRegistrationNumber, -NUMTotalAVPointsAwarded), y = NUMTotalAVPointsAwarded)) +
-  geom_text(aes(label = NUMTotalAVPointsAwarded), vjust = 1.6, color = "white", size = 3.5) +
-  geom_bar(stat = "identity", fill = 'lightblue') +
-  labs(title = "AV Shield 2017-18: Points awarded [AV Shield]",
-            x = "Athlete registration ID",
-            y = "Total Points Awarded [AV Shield]") 
-    
-    # Horizontal Barplot [Method 1st=11, 2-9=11minus finish order, >10 = 1 point, by Round]:
-    wrk.03DataTrans_SUMM01C <- wrk.03DataTrans_SUMM01A %>%
-      arrange(desc(NUMTotalRoundPoints11)) %>%
-      head(n = 10)
-    
-    # Graph 3:
-      ggplot(wrk.03DataTrans_SUMM01C, aes(x = reorder(KEYRegistrationNumber, -NUMTotalRoundPoints11), y = NUMTotalRoundPoints11)) +
-  geom_text(aes(label = NUMTotalRoundPoints11), vjust = 1.6, color = "white", size = 3.5) +
-  geom_bar(stat = "identity", fill = 'lightblue') +
-  labs(title = "AV Shield 2017-18: Points awarded [1st=11, round]",
-            x = "Athlete registration ID",
-            y = "Total Points Awarded [11 by round]") 
-    
 
-    # Horizontal Barplot [Method: 1st=11, 2-9=11minus finish order, >10 = 1 
-    #                     point, with AWD performance Adjust by Round]:
-    wrk.03DataTrans_SUMM01D <- wrk.03DataTrans_SUMM01A %>%
-    arrange(desc(NUMTotalRoundPoints11AWDAdj)) %>%
+  # #1 Setup data for AV shield method (decathlon WR):
+  wrk.03DataTrans_SUMM01B <- wrk.03DataTrans_SUMM01A %>%
+    arrange(desc(NUMTotalAVPointsAwarded)) %>%
+    head(n = 10)
+  
+ # GRAPH 1: 
+  ggplot(wrk.03DataTrans_SUMM01B, aes(x = reorder(KEYRegistrationNumber, -NUMTotalAVPointsAwarded), y = NUMTotalAVPointsAwarded)) +
+  geom_bar(stat = "identity", fill = 'lightblue') +
+  labs(title = "Method #1 - AV Shield 2017-18: Points awarded [AV Shield]",
+            x = "Athlete registration ID",
+            y = "Total Points Awarded [AV Shield]") +
+  geom_text(aes(label = NUMTotalAVPointsAwarded), vjust = 1.6, color = "white", size = 3.5) +
+  scale_y_continuous(sec.axis = dup_axis())
+
+
+  # #2 Setup data for method 2 (11-1st, by round/venue/event) :
+  wrk.03DataTrans_SUMM01C <- wrk.03DataTrans_SUMM01A %>%
+    arrange(desc(NUMTotalPoints11)) %>%
+    head(n = 10)
+  
+  # GRAPH 2:
+  ggplot(wrk.03DataTrans_SUMM01C, aes(x = reorder(KEYRegistrationNumber, -NUMTotalPoints11) , y = NUMTotalPoints11 )) +
+  geom_bar(stat = "identity", fill = 'lightblue') +
+   labs(title = "Method #2 - AV Shield 2017-18: Points awarded [1st=11, round/venue]",
+            x = "Athlete registration ID",
+            y = "Total Points Awarded [11]") +
+  geom_text(aes(label = NUMTotalPoints11), vjust = 1.6, color = "white", size = 3.5) +
+  scale_y_continuous(breaks = seq(0, 600, 50), sec.axis = dup_axis())
+  
+
+  # #3 Setup data for method (1st=11, 2-9=11minus finish order, >10 = 1 point, by Round):
+  wrk.03DataTrans_SUMM01D <- wrk.03DataTrans_SUMM01A %>%
+    arrange(desc(NUMTotalRoundPoints11)) %>%
     head(n = 10)
     
-    #GRAPH 4:
-          ggplot(wrk.03DataTrans_SUMM01D, aes(x = reorder(KEYRegistrationNumber, -NUMTotalRoundPoints11AWDAdj), y = NUMTotalRoundPoints11AWDAdj)) +
-  geom_text(aes(label = NUMTotalRoundPoints11AWDAdj), vjust = 1.6, color = "white", size = 3.5) +
+  # Graph 3:
+  ggplot(wrk.03DataTrans_SUMM01D, aes(x = reorder(KEYRegistrationNumber, -NUMTotalRoundPoints11), y = NUMTotalRoundPoints11)) +
   geom_bar(stat = "identity", fill = 'lightblue') +
-  labs(title = "AV Shield 2017-18: Points awarded [AWD Adjust,1st=11, round]",
+  labs(title = "Method #3 - AV Shield 2017-18: Points awarded [1st=11, round]",
             x = "Athlete registration ID",
-            y = "Total Points Awarded [AWD Adjust & 11 by round]") 
+            y = "Total Points Awarded [11 by round]") +
+  geom_text(aes(label = NUMTotalRoundPoints11), vjust = 1.6, color = "white", size = 3.5) +
+  scale_y_continuous(breaks = seq(0, 600, 50), sec.axis = dup_axis())
+    
+
+  # #4 Setup data for Method: 1st=11, 2-9=11minus finish order, >10 = 1point, with AWD performance Adjust by Round]:
+  wrk.03DataTrans_SUMM01E <- wrk.03DataTrans_SUMM01A %>%
+  arrange(desc(NUMTotalRoundPoints11AWDAdj)) %>%
+  head(n = 10)
+    
+  #GRAPH 4:
+  ggplot(wrk.03DataTrans_SUMM01E, aes(x = reorder(KEYRegistrationNumber, -NUMTotalRoundPoints11AWDAdj), y = NUMTotalRoundPoints11AWDAdj)) +
+  geom_bar(stat = "identity", fill = 'lightblue') +
+  labs(title = "Method #4 - AV Shield 2017-18: Points awarded [AWD Adjust, 1st=11]",
+            x = "Athlete registration ID",
+            y = "Total Points Awarded [AWD Adjust & 11 by round]") +
+  geom_text(aes(label = NUMTotalRoundPoints11AWDAdj), vjust = 1.6, color = "white", size = 3.5) +
+  scale_y_continuous(breaks = seq(0, 600, 50), sec.axis = dup_axis())
     
     
 ```
 <br><br>  
 These graphs illustrate that by changing the method of points calculation it does have an impact, at the granular individual athlete level. We observe the ordering of the highest point scoring athletes changes with the method used.
 
-Consider this: If the methods impact at the athlete level, what will happen when it rolls up to club and zone?
+With the 4th method illustrated, while the highest 6 athlete finishing orders do not change, we see some movement between finishing orders 7 and 10.
+
+Consider this: 
+
+* If the methods impact at the individual athlete level, what will happen when it rolls up to club and zone?
+* How should we design a point scoring method which **rewards participation** at any performance level and is fair and **balanced** across regions?
 
 <br><br> 
 
 ## Summary notes & future analyses
 
-A signficant portion of this analysis was spend on data preparation, cleanup and feature engineering. Spending time carefully assessing the source data helps in establishing a solid foundation to conduct an analysis on.
+A significant portion of this analysis was spend on data preparation, cleanup and feature engineering. Spending time carefully assessing the source data helps greatly in establishing a solid foundation to conduct an analysis on. 
 
-Observations made in data prep:
+Here's the rough breakdown of time spent:
+
+* 70% - Data understanding, preparation, checking, cleanup
+* 10% - Key feature engineering (AWD classifications, Venue geography, useful data groupings/classifications)
+* 10% - Deciding how to "tell the story", visualisations, summary tables, appropriate aggregations
+* 10% - Writing the story, peer-review/copy writing, technical design of this R markdown document.
+<br>
+
+
+
+Observations made along the journey in data prep:
 
 * No dates are recorded in the source data. Is this worth adding?
-* Inconsistent data entry for athletes with disability, flagging their classification
-* Inconsistent data entry for flagging events or athletes as invitation
+* Wind direction and air temperature is not recorded. Could environmental conditions play a part in performance and participation?
+* Inconsistent data entry for athletes with disability, flagging their classification. This is important to consider when calculating normalised performances.
+* Inconsistent data entry for flagging events or athletes as invitation. It is unclear if the athlete is competing as invitation or if the event was held as invitation.
+* Inconsistent data entry for venue hosting competition. For example, small things like "Meadowglen" versus "Meadow Glen".
+* Different events are held at different venues for a single round, there is no overarching consistency, therefore making it challenging to compare "apples for apples" by round of competition.
+  + Subject matter expertise suggests that, some athletics track venues don't support certain event groupings running on the same program due to safety concerns or logistics, however this can be remedied with program event scheduling. EG: Hammer throw scheduled very early, and Javelin held very late in the event schedule, avoiding the issue of throwing implements crossing the infield simultaneously.
+  
+<br>
+**Where to next?**
 
+There were a few elements in this analysis we could unpack further, such as:
 
-Thank's for reading, and your thoughts, queries and feedback are welcome and appreciated.
+  * participation by club
+  * geographically plotting athlete/club commutes & volumes to venues outside their club's district
+  * athletes breaking records or achieving qualifying standards (Nationals, World Juniors, Commonwealth Games, Olympics)
+  * wind readings & performance impacts
+  * event performance trends by age group. 
+    + could we predict performances for athletes, based on participation history?
+  * External perspective: How does Victorian athletics compare to other states of Australia, and the rest of the world?
+  * Contemporary risk management approach: For Victorian athletics, a key risk event could be desribed as "Inter-club ceases due to insufficient partitipation rates". What causal factors and consequences could we unpack from the data to provide insight into developing potential controls and treatments?
 
-Bree
+<br>
+
+As mentioned in the purpose and objective of this analysis, having a clear business problem to address goes a long way to creating useful, actionable insights, to assist the target audience. If there are more business problems to consider and unpack then it is likely we can look at part two of this analysis.
+
+<br>
+
+We'd love to receive your thoughts, queries and feedback on this analysis. Please feel free to reach out to Bree at bree_mclennan@outlook.com .
+<br><br> 
+Thanks for connecting and reading!
+
+Bree.
 
 <br><br>  
+
+```{r "knit2wpquery", echo=FALSE}
+# The following code should be called from a separte R script file. This is placeholder code incase we want to publish to wordpress.
+# Be mindful of the type of content within your rmarkdown document. If it contains DT datatables and leaflet maps and you want them to be #"interactive" and not converted to png images via webshot, consider using function calls # to htmlwidgets and saving the widgets individually #(pay attention to html_document parameter self_contained = TRUE in this scenario). Then consider any header.php modifications you may need to #make for wordpress to render these widgets correctly.
+
+#invoke the knit2wp function, which tells knitr to create the html code and upload it to your WordPress site. Specify the Rmd file name, blog post # title, and any additional arguments. 
+# Optional: If you want to see all of the knit2wp arguments that are possible, run this line.
+# ?knit2wp
+
+# If need be, set your working directory to the location where you stored the Rmd file. 
+#setwd(F("Code/Dev"))
+
+# Tell knitr to create the html code and upload it to your WordPress site
+#set a "publish = FALSE" argument; this means that the post will get uploaded but it won't be publicly available just yet. This is ideal if you #want to head to your WordPress site to preview the post before publishing manually. If you set "publish = TRUE", then it'll be publicly available # immediately.
+#using library(knitr)
+#knit2wp('10_AthleticsInterclubDataAnalysis', title = 'Data Analysis of Athletics Inter-club Results', publish = FALSE)
+# Once this line runs, check your wordpress site for both media uploads (png files) and new post created as draft
+
+```
