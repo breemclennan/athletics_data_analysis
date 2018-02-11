@@ -109,20 +109,20 @@ The objective is to explore Victorian inter-club track & field athletic competit
 ## Key questions from the target audience to guide this analysis
 
   1. What are the participation rates at inter-club competitions?
-    + Can we break this down by zones and clubs?
-    + What's the distribution of total competitions athletes participate in during the season?
-      - How many events per competition do athletes partake in?
-    + How many athletes participated in all rounds of competition?
-    + How many athletes competed at "away" venues? (ignoring metro zone v zone)
+      + Can we break this down by zones and clubs?
+      + What's the distribution of total competitions athletes participate in during the season?
+        - How many events per competition do athletes partake in?
+      + How many athletes participated in all rounds of competition?
+      + How many athletes competed at "away" venues? (ignoring metro zone v zone)
   2. How many opportunities are there for each event type?
-    + Can we see stats by event grouping?
-    + What's the most poplar event?
+      + Can we see stats by event grouping?
+      + What's the most poplar event?
   3. How many incomplete events or invalid event attempts occurred?
   4. Is there any pattern to performances as the season progresses?
   5. How many venues are involved throughout the season?
-    + What's the "windiest" venue?
+      + What's the "windiest" venue?
   6. Can we see how points are distributed for performances?
-    + What other alternatives to point scoring are there?
+      + What other alternatives to point scoring are there?
 
 
 ## Context specific process flow for this analysis
@@ -131,15 +131,15 @@ The objective is to explore Victorian inter-club track & field athletic competit
   1. Obtain target audience input.
   2. Obtain source data [Athletics Victoria "AV Shield 2017-18"](http://athsvic.org.au/events/competitions/avcompetitions/av-shield/).
   3. Conduct a risk assessment on source data with respect to purpose & objective.
-    + Discarding any data which is not relevant to the analysis guiding questions.
+      + Discarding any data which is not relevant to the analysis guiding questions.
   4. Technical setup to commence analysis:
-    + [Github repository](https://github.com/breemclennan/athletics_data_analysis)
-    + R Project file.
-        - Load data >> Prepare data >> Merge reference data >> Transform data >> Analyse data
+      + [Github repository](https://github.com/breemclennan/athletics_data_analysis)
+      + R Project file.
+          - Load data >> Prepare data >> Merge reference data >> Transform data >> Analyse data
   5. Explore data & key guiding questions to discover answers.
   6. Peer review & publish analysis and findings.
   7. Obtain audience feedback, review and apply updates where appropriate.
-    + Opportunities to subsequent analysis.
+      + Opportunities for subsequent analysis.
 
 
 ## Analysis data considerations
@@ -170,8 +170,7 @@ Technical approach to creating the analysis data:
 
 ## Structure of the created analysis dataset
   
-  We commenced with 21 variables in the source data-set. After performing some high level checks on the data we discovered opportunities to
-  create new variables (features) by applying context/subject matter expertise and joining relevant reference tables to the source data.
+  We commenced with 21 variables in the source data-set. After performing some high level checks on the data we discovered opportunities to create new variables (features) by applying context/subject matter expertise and joining relevant reference tables to the source data.
   
   All variables have been renamed to use a three-letter acronym prefix to denote the expected general data type values.
   
@@ -353,11 +352,11 @@ Let's take a look at the participation by venue and Victorian region:
 wrk.03DataTrans_Q1D <- wrk.03DataTrans_03 %>%
   filter(KEYRegistrationNumber %ni% c("0")) %>% #remove teams
   group_by(CATCompetitionVenue, CATVenueZone) %>%
-  summarise(NUMAthltesParticipated = n_distinct(KEYRegistrationNumber)) %>%
-  arrange(desc(NUMAthltesParticipated))
+  summarise(NUMAthletesParticipated = n_distinct(KEYRegistrationNumber)) %>%
+  arrange(desc(NUMAthletesParticipated))
  
 wrk.03DataTrans_Q1DD <- wrk.03DataTrans_Q1D %>%
-  #mutate(NUMAthltesParticipated = color_bar("lightblue")(NUMAthltesParticipated)) %>%
+  #mutate(NUMAthletesParticipated = color_bar("lightblue")(NUMAthletesParticipated)) %>%
   kable("html", escape = FALSE, align = "l", caption = "Summary of venues and total distinct athlete participation") %>%        kableExtra::kable_styling("hover", full_width = FALSE, position = "left") 
 
 wrk.03DataTrans_Q1DD
@@ -791,7 +790,7 @@ Consider this:
 
 ## Summary notes & future analyses
 
-A significant portion of this analysis was spend on data preparation, cleanup and feature engineering. Spending time carefully assessing the source data helps greatly in establishing a solid foundation to conduct an analysis on. 
+A significant portion of this analysis was spent on data preparation, cleanup and feature engineering. Spending time carefully assessing the source data helps greatly in establishing a solid foundation to conduct an analysis on. 
 
 Here's the rough breakdown of time spent:
 
@@ -818,14 +817,14 @@ Observations made along the journey in data prep:
 
 There were a few elements in this analysis we could unpack further, such as:
 
-  * participation by club
-  * geographically plotting athlete/club commutes & volumes to venues outside their club's district
-  * athletes breaking records or achieving qualifying standards (Nationals, World Juniors, Commonwealth Games, Olympics)
-  * wind readings & performance impacts
-  * event performance trends by age group. 
-    + could we predict performances for athletes, based on participation history?
-  * External perspective: How does Victorian athletics compare to other states of Australia, and the rest of the world?
-  * Contemporary risk management approach: For Victorian athletics, a key risk event could be desribed as "Inter-club ceases due to insufficient partitipation rates". What causal factors and consequences could we unpack from the data to provide insight into developing potential controls and treatments?
+* participation by club
+* geographically plotting athlete/club commutes & volumes to venues outside their club's district
+* athletes breaking records or achieving qualifying standards (Nationals, World Juniors, Commonwealth Games, Olympics)
+* wind readings & performance impacts
+* event performance trends by age group. 
+  + could we predict performances for athletes, based on participation history?
+* External perspective: How does Victorian athletics compare to other states of Australia, and the rest of the world?
+* Contemporary risk management approach: For Victorian athletics, a key risk event could be described as "Inter-club ceases due to insufficient participation rates". What causal factors and consequences could we unpack from the data to provide insight into developing potential controls and treatments?
 
 <br>
 

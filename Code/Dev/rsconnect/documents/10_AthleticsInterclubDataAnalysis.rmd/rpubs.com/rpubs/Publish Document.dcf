@@ -1,0 +1,10 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/358480/a1c072fe59e042f490e79e698d274707
+bundleId: https://api.rpubs.com/api/v1/document/358480/a1c072fe59e042f490e79e698d274707
+url: http://rpubs.com/BreeMcLennan/358480
+when: 1518335690.0272
